@@ -448,12 +448,14 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       formData.append("file", file);
       formData.append("target_role", target_role);
 
-      const response = await fetch(`${window.location.origin}/api/resume/analyze`, {
+      const response = await fetch('/api/resume/analyze', {
         method: 'POST',
         headers: {
-          Authorization: `Bearer ${session.access_token}`
+          Authorization: `Bearer ${session.access_token}`,
+          Accept: 'application/json'
         },
-        body: formData
+        body: formData,
+        credentials: 'same-origin'
       });
 
       // Guard: ensure response is JSON before parsing
