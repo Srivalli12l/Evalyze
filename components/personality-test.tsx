@@ -202,7 +202,15 @@ export function PersonalityTest() {
         <div className="mb-1 flex items-center gap-2 text-sm">
           <Heart className="h-4 w-4 text-primary" />
           <span className="font-medium text-primary">
-            Personality Assessment for Frontend Developer
+            Personality Assessment for {(() => {
+              if (!selectedRole) return "your target role";
+              const lowRole = selectedRole.toLowerCase();
+              if (lowRole.includes('mobile')) return 'mobile development';
+              if (lowRole.includes('fullstack')) return 'fullstack development';
+              if (lowRole.includes('front end')) return 'front end development';
+              if (lowRole.includes('backend')) return 'backend development';
+              return selectedRole;
+            })()}
           </span>
         </div>
         <p className="text-xs text-muted-foreground">

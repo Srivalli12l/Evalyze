@@ -5,6 +5,7 @@ import { useApp } from "@/lib/app-context";
 import { Button } from "@/components/ui/button";
 import { DownloadReportButton } from "@/components/download-report-button";
 import { SendResultEmailButton } from "@/components/SendResultEmailButton";
+import { SkillRecommendationCard } from "@/components/skill-recommendation";
 import { cn } from "@/lib/utils";
 import {
   Sparkles,
@@ -86,7 +87,7 @@ function AnimatedScore({
 }
 
 export function ResultsPage() {
-  const { resumeAnalysis, selectedRole, user, skillResults, personalityResults, resetAssessment } = useApp();
+  const { resumeAnalysis, selectedRole, user, skillResults, personalityResults, resetAssessment, currentAnalysisId } = useApp();
 
   // If no analysis data, show a message
   if (!resumeAnalysis) {
@@ -208,7 +209,7 @@ export function ResultsPage() {
 
       {/* Section F: Areas for Improvement */}
       {resumeAnalysis.gaps && resumeAnalysis.gaps.length > 0 && (
-        <div className="mb-8 rounded-xl border border-accent/30 bg-accent/5 p-6">
+        <div className="mb-4 rounded-xl border border-accent/30 bg-accent/5 p-6">
           <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold text-foreground">
             <Target className="h-5 w-5 text-accent" />
             Areas for Improvement
@@ -223,6 +224,15 @@ export function ResultsPage() {
           </div>
         </div>
       )}
+
+      {/* Section F2: Explore Skills to Improve */}
+      <SkillRecommendationCard
+        analysisId={currentAnalysisId}
+        targetRole={selectedRole}
+        strengths={resumeAnalysis.strengths || []}
+        gaps={resumeAnalysis.gaps || []}
+        feedback={resumeAnalysis.feedback || ""}
+      />
 
       {/* Section G: Export */}
       <div className="flex flex-col gap-3 sm:flex-row">

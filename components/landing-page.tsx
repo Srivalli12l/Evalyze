@@ -78,7 +78,7 @@ export function LandingPage() {
               <Sparkles className="h-4 w-4 text-primary-foreground" />
             </div>
             <span className="text-lg font-bold text-foreground">
-              PlaceReady AI
+              Evalyze
             </span>
           </div>
           <div className="flex items-center gap-3">
@@ -184,7 +184,7 @@ export function LandingPage() {
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
             {steps.map((step, i) => (
               <div key={step.step} className="relative">
-                <div className="rounded-xl border border-border bg-card p-6">
+                <div className="flex h-full flex-col rounded-xl border border-border bg-card p-6">
                   <div className="mb-4 flex items-center gap-3">
                     <span className="text-sm font-bold text-primary">
                       {step.step}
@@ -195,7 +195,7 @@ export function LandingPage() {
                   <h3 className="mb-2 font-semibold text-foreground">
                     {step.title}
                   </h3>
-                  <p className="text-sm leading-relaxed text-muted-foreground">
+                  <p className="flex-1 text-sm leading-relaxed text-muted-foreground">
                     {step.description}
                   </p>
                 </div>
@@ -208,23 +208,15 @@ export function LandingPage() {
         </div>
       </section>
 
-      {/* Stats / Social Proof */}
+      {/* Mission / Fill */}
       <section className="border-t border-border bg-primary px-6 py-16">
-        <div className="mx-auto grid max-w-4xl gap-8 text-center md:grid-cols-3">
-          {[
-            { value: "10,000+", label: "Students Assessed" },
-            { value: "85%", label: "Placement Success Rate" },
-            { value: "50+", label: "Roles Supported" },
-          ].map((stat) => (
-            <div key={stat.label}>
-              <div className="text-3xl font-bold text-primary-foreground">
-                {stat.value}
-              </div>
-              <div className="mt-1 text-sm text-primary-foreground/70">
-                {stat.label}
-              </div>
-            </div>
-          ))}
+        <div className="mx-auto max-w-4xl text-center">
+          <h2 className="text-2xl font-bold text-primary-foreground md:text-3xl">
+            Bridging the Gap Between Preparation and Placement
+          </h2>
+          <p className="mt-4 text-primary-foreground/80">
+            Our platform is dedicated to providing students with the tools they need to succeed in their career journeys through personalized, AI-driven insights.
+          </p>
         </div>
       </section>
 
@@ -235,8 +227,7 @@ export function LandingPage() {
             Ready to Get Started?
           </h2>
           <p className="mb-8 text-muted-foreground">
-            Join thousands of students who improved their placement readiness
-            with AI-powered assessments.
+            Join the journey towards your dream placement with AI-powered assessments.
           </p>
           <Button
             size="lg"
@@ -257,12 +248,11 @@ export function LandingPage() {
               <Sparkles className="h-3 w-3 text-primary-foreground" />
             </div>
             <span className="text-sm font-semibold text-foreground">
-              PlaceReady AI
+              Evalyze
             </span>
           </div>
-          <div className="flex items-center gap-1 text-sm text-muted-foreground">
-            <CheckCircle2 className="h-3.5 w-3.5 text-secondary" />
-            Trusted by top universities
+          <div className="text-sm text-muted-foreground">
+            © {new Date().getFullYear()} Evalyze. All rights reserved.
           </div>
         </div>
       </footer>

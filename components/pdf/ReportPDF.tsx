@@ -149,7 +149,7 @@ export function ReportPDF({ data }: { data: ReportData }) {
                 {/* Header */}
                 <Text style={styles.title}>Career Assessment Report</Text>
                 <Text style={styles.subtitle}>
-                    Generated on {generatedAt} • PlaceReady AI
+                    Generated on {generatedAt} • Evalyze
                 </Text>
 
                 {/* Section 1: User Info */}
@@ -270,7 +270,7 @@ export function ReportPDF({ data }: { data: ReportData }) {
 
                 {/* Footer */}
                 <Text style={styles.footer}>
-                    PlaceReady AI • Career Assessment Report • Confidential
+                    Evalyze • Career Assessment Report • Confidential
                 </Text>
             </Page>
         </Document>

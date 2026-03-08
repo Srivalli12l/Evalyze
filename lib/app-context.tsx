@@ -12,7 +12,8 @@ type Step =
   | "resume-upload"
   | "skill-assessment"
   | "personality-test"
-  | "results";
+  | "results"
+  | "analysis-history";
 
 // Export as AppStep for compatibility
 export type AppStep = Step;
@@ -83,6 +84,7 @@ type AppContextType = {
   submitSkillTest: (answers: number[]) => Promise<void>;
   submitPersonalityTest: (answers: number[]) => Promise<void>;
   resetAssessment: () => void;
+  currentAnalysisId: string | null;
 };
 
 const AppContext = createContext<AppContextType | null>(null);
@@ -103,6 +105,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   // Assessment state
   const [selectedRole, setSelectedRole] = useState<string | null>(null);
+  const [currentAnalysisId, setCurrentAnalysisId] = useState<string | null>(null);
 
   /** Reset all client-side assessment state so the user can analyze a new resume */
   const resetAssessment = useCallback(() => {
@@ -111,6 +114,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setResumeAnalysis(null);
     setSkillResults(null);
     setPersonalityResults(null);
+    setCurrentAnalysisId(null);
     setProgress({
       resumeUploaded: false,
       skillTestDone: false,
@@ -147,6 +151,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
+  /**
+   * Fetch the LATEST analysis results from the backend and hydrate all
+   * client-side state so the dashboard shows the correct, most-recent data.
+   */
   const fetchResults = useCallback(async (userId: string) => {
     try {
       const response = await fetch(`/api/results?userId=${userId}`);
@@ -155,18 +163,33 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       if (data.success && data.data) {
         const { resume, assessments } = data.data;
 
-        // Hydrate Resume State
+        // Hydrate Resume State from REAL data
         if (resume) {
+          const skill_strength: Record<string, string> = {};
+          (resume.skills_detected || []).forEach((skill: string) => {
+            skill_strength[skill] = "strong";
+          });
+
           setResumeAnalysis({
-            role_fit_score: resume.role_fit_score,
-            skills_detected: resume.skills_detected,
-            skill_strength: { technical: "High", soft: "Medium" },
-            resume_quality: resume.resume_quality,
-            strengths: ["Loaded from previous session"],
-            gaps: []
+            role_fit_score: resume.role_fit_score || 0,
+            skills_detected: resume.skills_detected || [],
+            skill_strength,
+            resume_quality: resume.resume_quality || 0,
+            strengths: resume.strengths || [],
+            gaps: resume.gaps || [],
+            feedback: resume.feedback || '',
+            overall_score: resume.role_fit_score || 0,
           });
           setResumeFile({ name: resume.file_name, size: 1024 * 500 } as File);
           setProgress(prev => ({ ...prev, resumeUploaded: true }));
+
+          // Restore the analysis ID and target role from the latest session
+          if (resume.id) {
+            setCurrentAnalysisId(resume.id);
+          }
+          if (resume.target_role) {
+            setSelectedRole(resume.target_role);
+          }
         }
 
         // Hydrate Skill State
@@ -201,36 +224,54 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   // ── Initialize session on mount ─────────────────────────────────────
 
   useEffect(() => {
+    // Helper: check role and redirect admin if needed
+    async function handleSessionUser(session: Session) {
+      const metadata = session.user.user_metadata;
+      setUser({
+        email: session.user.email!,
+        name: metadata?.name || session.user.email!.split("@")[0],
+      });
+
+      // Check if user is admin — if so, redirect to /admin
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', session.user.id)
+        .single();
+
+      if (profile?.role === 'admin') {
+        // Admin should never see user dashboard — redirect to /admin
+        if (!window.location.pathname.startsWith('/admin')) {
+          window.location.href = '/admin';
+        }
+        return;
+      }
+
+      // Regular user → always show fresh dashboard (no old data loaded)
+      setCurrentStep("dashboard");
+    }
+
     // Check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    const init = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
       setSession(session);
       if (session?.user) {
-        const metadata = session.user.user_metadata;
-        setUser({
-          email: session.user.email!,
-          name: metadata?.name || session.user.email!.split("@")[0],
-        });
-        setCurrentStep("dashboard");
-        fetchResults(session.user.id);
+        await handleSessionUser(session);
       }
       setAuthLoading(false);
-    });
+    };
+    init();
 
     // Listen for auth changes
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
+    } = supabase.auth.onAuthStateChange(async (_event, session) => {
       setSession(session);
       if (session?.user) {
-        const metadata = session.user.user_metadata;
-        setUser({
-          email: session.user.email!,
-          name: metadata?.name || session.user.email!.split("@")[0],
-        });
-        setCurrentStep("dashboard");
-        fetchResults(session.user.id);
+        await handleSessionUser(session);
       } else {
         setUser(null);
+        setAuthLoading(false);
       }
     });
 
@@ -318,10 +359,26 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           email: data.user.email!,
           name: userName,
         });
-        setCurrentStep("dashboard");
 
         // Upsert profile row on login (ensures it exists)
         await upsertProfile(data.user.id, userName, data.user.email!);
+
+        // Fetch the user's role from the database to decide where to redirect
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('id', data.user.id)
+          .single();
+
+        if (profile?.role === 'admin') {
+          // Admin → redirect to admin dashboard (real Next.js route)
+          setAuthLoading(false);
+          window.location.href = '/admin';
+          return { success: true };
+        }
+
+        // Regular user → stay in-app dashboard
+        setCurrentStep("dashboard");
       }
 
       setAuthLoading(false);
@@ -353,6 +410,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
     // Reset assessment data
     setSelectedRole(null);
+    setCurrentAnalysisId(null);
     setResumeFile(null);
     setResumeAnalysis(null);
     setSkillResults(null);
@@ -416,6 +474,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           overall_score: data.score || analysis.analysis_score,
         });
         setProgress((prev) => ({ ...prev, resumeUploaded: true }));
+
+        // Store the analysis session ID for linking assessments
+        if (analysis?.id) {
+          setCurrentAnalysisId(analysis.id);
+        }
       } else {
         console.error("Analysis failed:", data.error);
         throw new Error(data.error);
@@ -443,7 +506,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         body: JSON.stringify({
           type: 'skill',
           answers,
-          userId: session.user.id
+          userId: session.user.id,
+          analysisId: currentAnalysisId,
         })
       });
 
@@ -457,7 +521,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     } catch (err) {
       console.error("API Error:", err);
     }
-  }, [session?.user?.id]);
+  }, [session?.user?.id, currentAnalysisId]);
 
   const markSkillTestDone = useCallback(() => {
     setProgress((prev) => ({ ...prev, skillTestDone: true }));
@@ -476,26 +540,58 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         body: JSON.stringify({
           type: 'personality',
           answers,
-          userId: session.user.id
+          userId: session.user.id,
+          analysisId: currentAnalysisId,
         })
       });
 
       const data = await response.json();
       if (data.success) {
-        setPersonalityResults(data.results);
+        const newPersonalityResults = data.results;
+        setPersonalityResults(newPersonalityResults);
 
-        const newProgress = { ...progress, personalityDone: true };
-        if (newProgress.resumeUploaded && newProgress.skillTestDone) {
-          newProgress.allDone = true;
+        setProgress((prev) => {
+          const newProgress = { ...prev, personalityDone: true };
+          if (newProgress.resumeUploaded && newProgress.skillTestDone) {
+            newProgress.allDone = true;
+          }
+          return newProgress;
+        });
+
+        // Save completed analysis to history
+        const overallScore = resumeAnalysis?.overall_score || resumeAnalysis?.role_fit_score || 0;
+        const readinessLevel =
+          overallScore >= 80 ? "Excellent" :
+            overallScore >= 60 ? "Good" :
+              overallScore >= 40 ? "Moderate" : "Needs Improvement";
+
+        try {
+          await fetch('/api/analysis-history/save', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              user_id: session.user.id,
+              resume_name: resumeFile?.name || 'resume.pdf',
+              target_role: selectedRole || 'Unknown',
+              overall_score: overallScore,
+              readiness_level: readinessLevel,
+              result_json: {
+                resumeAnalysis,
+                skillResults,
+                personalityResults: newPersonalityResults,
+              },
+            }),
+          });
+        } catch (saveErr) {
+          console.error('[submitPersonalityTest] Failed to save history:', saveErr);
         }
-        setProgress(newProgress);
       } else {
         console.error('Personality test submit failed:', data.error);
       }
     } catch (err) {
       console.error("API Error:", err);
     }
-  }, [session?.user?.id, progress]);
+  }, [session?.user?.id, currentAnalysisId, resumeAnalysis, skillResults, resumeFile, selectedRole]);
 
   const markPersonalityDone = useCallback(() => {
     setProgress((prev) => {
@@ -541,7 +637,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         analyzeResume,
         submitSkillTest,
         submitPersonalityTest,
-        resetAssessment
+        resetAssessment,
+        currentAnalysisId,
       }}
     >
       {children}
@@ -556,4 +653,3 @@ export function useApp() {
   }
   return context;
 }
-

@@ -52,10 +52,14 @@ ALTER TABLE resume_analysis ADD COLUMN IF NOT EXISTS resume_text TEXT;
 ALTER TABLE resume_analysis ADD COLUMN IF NOT EXISTS extracted_skills TEXT;
 ALTER TABLE resume_analysis ADD COLUMN IF NOT EXISTS target_role TEXT;
 ALTER TABLE resume_analysis ADD COLUMN IF NOT EXISTS analysis_score INTEGER;
+ALTER TABLE resume_analysis ADD COLUMN IF NOT EXISTS strengths TEXT;
+ALTER TABLE resume_analysis ADD COLUMN IF NOT EXISTS gaps TEXT;
+ALTER TABLE resume_analysis ADD COLUMN IF NOT EXISTS feedback TEXT;
 ALTER TABLE resume_analysis ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ DEFAULT timezone('utc'::text, now()) NOT NULL;
 
 -- assessment_results: ensure all columns exist
 ALTER TABLE assessment_results ADD COLUMN IF NOT EXISTS user_id UUID;
+ALTER TABLE assessment_results ADD COLUMN IF NOT EXISTS analysis_id UUID REFERENCES resume_analysis(id);
 ALTER TABLE assessment_results ADD COLUMN IF NOT EXISTS skill_score INTEGER;
 ALTER TABLE assessment_results ADD COLUMN IF NOT EXISTS personality_score INTEGER;
 ALTER TABLE assessment_results ADD COLUMN IF NOT EXISTS overall_score INTEGER;

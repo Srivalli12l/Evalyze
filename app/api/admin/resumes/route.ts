@@ -1,12 +1,20 @@
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase-admin'
+import { requireAdmin } from '@/lib/require-admin'
 
 /**
  * Admin API — returns latest resume analyses (read-only).
  * Uses supabaseAdmin (service role) so it bypasses RLS.
+ * Protected by requireAdmin() — only admins can access.
  */
-export async function GET() {
+export async function GET(req: NextRequest) {
     try {
+        // Auth + role check
+        const auth = await requireAdmin(req)
+        if (!auth.authorized) {
+            return NextResponse.json(auth.body, { status: auth.status })
+        }
+
         const { data, error } = await supabaseAdmin
             .from('resume_analysis')
             .select('id, user_id, target_role, analysis_score, created_at')

@@ -116,6 +116,9 @@ Respond with ONLY this JSON structure:
                 extracted_skills: skills.join(', '),
                 target_role,
                 analysis_score: score,
+                strengths: JSON.stringify(strengths),
+                gaps: JSON.stringify(gaps),
+                feedback,
             })
             .select()
             .single()

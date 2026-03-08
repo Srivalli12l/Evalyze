@@ -13,7 +13,7 @@ export async function GET(req: Request) {
             );
         }
 
-        // 1. Fetch latest resume analysis
+        // 1. Fetch the LATEST resume analysis (with strengths, gaps, feedback)
         const resumeQuery = await supabaseAdmin
             .from('resume_analysis')
             .select('*')
@@ -22,32 +22,64 @@ export async function GET(req: Request) {
             .limit(1)
             .maybeSingle();
 
-        // 2. Fetch latest assessment results
-        const assessmentQuery = await supabaseAdmin
-            .from('assessment_results')
-            .select('*')
-            .eq('user_id', userId)
-            .order('created_at', { ascending: false })
-            .limit(1)
-            .maybeSingle();
+        const latestResume = resumeQuery.data;
 
-        // Aggregate results
+        // 2. Fetch assessment_results linked to this specific analysis session
+        //    Falls back to latest assessment if analysis_id link doesn't exist yet
+        let assessmentData = null;
+        if (latestResume) {
+            // ONLY find assessment linked to this specific analysis session
+            const linkedQuery = await supabaseAdmin
+                .from('assessment_results')
+                .select('*')
+                .eq('user_id', userId)
+                .eq('analysis_id', latestResume.id)
+                .order('created_at', { ascending: false })
+                .limit(1)
+                .maybeSingle();
+
+            if (linkedQuery.data) {
+                assessmentData = linkedQuery.data;
+            }
+        }
+
+        // 3. Parse stored JSON fields safely
+        let strengths: string[] = [];
+        let gaps: string[] = [];
+        let feedback = '';
+
+        if (latestResume) {
+            try {
+                strengths = latestResume.strengths ? JSON.parse(latestResume.strengths) : [];
+            } catch { strengths = []; }
+            try {
+                gaps = latestResume.gaps ? JSON.parse(latestResume.gaps) : [];
+            } catch { gaps = []; }
+            feedback = latestResume.feedback || '';
+        }
+
+        // 4. Build response
         const results = {
-            resume: resumeQuery.data ? {
+            resume: latestResume ? {
+                id: latestResume.id,
                 file_name: 'resume.pdf',
-                role_fit_score: resumeQuery.data.analysis_score,
-                skills_detected: resumeQuery.data.extracted_skills
-                    ? resumeQuery.data.extracted_skills.split(', ')
+                role_fit_score: latestResume.analysis_score,
+                skills_detected: latestResume.extracted_skills
+                    ? latestResume.extracted_skills.split(', ')
                     : [],
-                resume_quality: resumeQuery.data.analysis_score,
+                resume_quality: latestResume.analysis_score,
+                target_role: latestResume.target_role,
+                strengths,
+                gaps,
+                feedback,
             } : null,
             assessments: {
-                skill: assessmentQuery.data?.skill_score != null ? {
-                    score: assessmentQuery.data.skill_score,
+                skill: assessmentData?.skill_score != null ? {
+                    score: assessmentData.skill_score,
                     details: null,
                 } : null,
-                personality: assessmentQuery.data?.personality_score != null ? {
-                    score: assessmentQuery.data.personality_score,
+                personality: assessmentData?.personality_score != null ? {
+                    score: assessmentData.personality_score,
                     traits: null,
                 } : null,
             },

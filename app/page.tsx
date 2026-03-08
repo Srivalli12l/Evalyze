@@ -9,9 +9,20 @@ import { ResumeUpload } from "@/components/resume-upload";
 import { SkillAssessment } from "@/components/skill-assessment";
 import { PersonalityTest } from "@/components/personality-test";
 import { ResultsPage } from "@/components/results-page";
+import { AnalysisHistory } from "@/components/analysis-history";
+import { Loader2 } from "lucide-react";
 
 export default function Page() {
-  const { currentStep } = useApp();
+  const { currentStep, authLoading } = useApp();
+
+  // Show a clean loading state while checking the session
+  if (authLoading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   // Public pages (no dashboard layout)
   if (currentStep === "landing") return <LandingPage />;
@@ -26,6 +37,8 @@ export default function Page() {
       {currentStep === "skill-assessment" && <SkillAssessment />}
       {currentStep === "personality-test" && <PersonalityTest />}
       {currentStep === "results" && <ResultsPage />}
+      {currentStep === "analysis-history" && <AnalysisHistory />}
     </DashboardLayout>
   );
 }
+

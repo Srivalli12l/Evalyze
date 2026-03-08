@@ -11,7 +11,7 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "PlaceReady AI - Ace Your Campus Placements",
+  title: "Evalyze - Ace Your Campus Placements",
   description:
     "AI-powered placement readiness assessment. Resume analysis, role-specific skill tests, and personalized feedback to help you land your dream role.",
 };

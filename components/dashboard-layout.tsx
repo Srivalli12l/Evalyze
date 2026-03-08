@@ -15,6 +15,7 @@ import {
   Lock,
   Menu,
   X,
+  History,
 } from "lucide-react";
 
 type SidebarStep = {
@@ -98,7 +99,7 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
             <Sparkles className="h-4 w-4 text-primary-foreground" />
           </div>
           <span className="text-lg font-bold text-foreground">
-            PlaceReady AI
+            Evalyze
           </span>
         </div>
 
@@ -108,10 +109,13 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
           </p>
           {sidebarSteps.map((step, idx) => {
             const status = getStepStatus(step.id, progress, currentStep);
-            const isClickable =
+            // During active assessment (resume done but not all done), sidebar is display-only
+            const assessmentInProgress = progress.resumeUploaded && !progress.allDone;
+            const isClickable = !assessmentInProgress && (
               status === "completed" ||
               status === "current" ||
-              status === "available";
+              status === "available"
+            );
 
             // Determine if step is completed based on progress flags
             const isCompleted =
@@ -136,11 +140,17 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
                   isCurrent &&
                   "bg-primary/10 text-primary animate-pulse-ring",
                   isCompleted && !isCurrent &&
-                  "text-secondary hover:bg-secondary/10",
+                  "text-secondary",
+                  isCompleted && !isCurrent && isClickable &&
+                  "hover:bg-secondary/10",
                   !isCompleted && !isCurrent && !isLocked &&
-                  "text-foreground hover:bg-muted",
+                  "text-foreground",
+                  !isCompleted && !isCurrent && !isLocked && isClickable &&
+                  "hover:bg-muted",
                   isLocked &&
-                  "cursor-not-allowed text-muted-foreground/50"
+                  "cursor-not-allowed text-muted-foreground/50",
+                  !isClickable && !isLocked &&
+                  "cursor-default"
                 )}
               >
                 <div
@@ -168,6 +178,18 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
         </nav>
 
         <div className="border-t border-border p-4">
+          {/* Analysis History - visually distinct */}
+          <button
+            type="button"
+            onClick={() => setCurrentStep("analysis-history")}
+            className="mb-3 flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-medium transition-all shadow-sm bg-primary text-primary-foreground"
+          >
+            <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border-2 border-primary-foreground/30 bg-white/10">
+              <History className="h-3.5 w-3.5" />
+            </div>
+            Analysis History
+          </button>
+
           <div className="mb-3 flex items-center gap-3 px-3">
             <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-sm font-medium text-primary-foreground">
               {user?.name?.charAt(0) || "U"}
@@ -200,7 +222,7 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
             <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary">
               <Sparkles className="h-3.5 w-3.5 text-primary-foreground" />
             </div>
-            <span className="font-bold text-foreground">PlaceReady AI</span>
+            <span className="font-bold text-foreground">Evalyze</span>
           </div>
           <button
             type="button"
@@ -231,7 +253,7 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
                   <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
                     <Sparkles className="h-4 w-4 text-primary-foreground" />
                   </div>
-                  <span className="text-lg font-bold text-foreground">PlaceReady</span>
+                  <span className="text-lg font-bold text-foreground">Evalyze</span>
                 </div>
                 <button type="button" onClick={() => setMobileMenuOpen(false)}>
                   <X className="h-5 w-5 text-muted-foreground" />
@@ -240,10 +262,13 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
               <nav className="flex flex-1 flex-col gap-1 p-4">
                 {sidebarSteps.map((step) => {
                   const status = getStepStatus(step.id, progress, currentStep);
-                  const isClickable =
+                  // During active assessment (resume done but not all done), sidebar is display-only
+                  const assessmentInProgress = progress.resumeUploaded && !progress.allDone;
+                  const isClickable = !assessmentInProgress && (
                     status === "completed" ||
                     status === "current" ||
-                    status === "available";
+                    status === "available"
+                  );
 
                   // Determine if step is completed based on progress flags
                   const isCompleted =
@@ -272,7 +297,9 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
                         isCompleted && !isCurrent && "text-secondary",
                         !isCompleted && !isCurrent && !isLocked && "text-foreground",
                         isLocked &&
-                        "cursor-not-allowed text-muted-foreground/50"
+                        "cursor-not-allowed text-muted-foreground/50",
+                        !isClickable && !isLocked &&
+                        "cursor-default"
                       )}
                     >
                       <div
@@ -299,6 +326,21 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
                 })}
               </nav>
               <div className="border-t border-border p-4">
+                {/* Analysis History - visually distinct */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setCurrentStep("analysis-history");
+                    setMobileMenuOpen(false);
+                  }}
+                  className="mb-3 flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-medium transition-all shadow-sm bg-primary text-primary-foreground"
+                >
+                  <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border-2 border-primary-foreground/30 bg-white/10">
+                    <History className="h-3.5 w-3.5" />
+                  </div>
+                  Analysis History
+                </button>
+
                 <Button
                   variant="ghost"
                   size="sm"

@@ -44,7 +44,7 @@ export async function POST(req: NextRequest) {
         <tr>
           <td style="background-color:#1a1a2e;padding:32px 40px;">
             <h1 style="margin:0;color:#ffffff;font-size:22px;">Placement Readiness Result</h1>
-            <p style="margin:8px 0 0;color:#a5b4fc;font-size:14px;">PlaceReady AI</p>
+            <p style="margin:8px 0 0;color:#a5b4fc;font-size:14px;">Evalyze</p>
           </td>
         </tr>
 
@@ -91,7 +91,7 @@ export async function POST(req: NextRequest) {
         <tr>
           <td style="background-color:#f9fafb;padding:20px 40px;text-align:center;border-top:1px solid #e5e7eb;">
             <p style="margin:0;color:#9ca3af;font-size:12px;">
-              This is an automated email from PlaceReady AI. Please do not reply.
+              This is an automated email from Evalyze. Please do not reply.
             </p>
           </td>
         </tr>
@@ -108,7 +108,7 @@ export async function POST(req: NextRequest) {
     }
 
     const { data: result, error } = await resend.emails.send({
-      from: 'PlaceReady AI <onboarding@resend.dev>',
+      from: 'Evalyze <onboarding@resend.dev>',
       to: email,
       subject: 'Your Placement Readiness Result',
       html,

@@ -8,12 +8,12 @@ import { ReportPDF, type ReportData } from '@/components/pdf/ReportPDF'
  * Runs entirely on the client — no server calls.
  */
 export async function downloadReportPDF(data: ReportData): Promise<void> {
-    const blob = await pdf(<ReportPDF data={ data } />).toBlob()
+    const blob = await pdf(<ReportPDF data={data} />).toBlob()
 
     const url = URL.createObjectURL(blob)
     const link = document.createElement('a')
     link.href = url
-    link.download = `PlaceReady_Report_${data.name?.replace(/\s+/g, '_') || 'User'}.pdf`
+    link.download = `Evalyze_Report_${data.name?.replace(/\s+/g, '_') || 'User'}.pdf`
     document.body.appendChild(link)
     link.click()
     document.body.removeChild(link)

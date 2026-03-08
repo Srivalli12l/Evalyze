@@ -1,8 +1,15 @@
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase-admin'
+import { requireAdmin } from '@/lib/require-admin'
 
-export async function GET() {
+export async function GET(req: NextRequest) {
     try {
+        // Auth + role check
+        const auth = await requireAdmin(req)
+        if (!auth.authorized) {
+            return NextResponse.json(auth.body, { status: auth.status })
+        }
+
         // 1. Fetch Total Users (profiles table)
         const { count: userCount, error: userError } = await supabaseAdmin
             .from('profiles')

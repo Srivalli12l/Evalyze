@@ -67,7 +67,6 @@ export function AuthPage({ mode }: { mode: "login" | "signup" }) {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
-  const [agreeTerms, setAgreeTerms] = useState(false);
   const [showVerificationMessage, setShowVerificationMessage] = useState(false);
 
   // Clear error when switching modes or changing inputs
@@ -90,7 +89,6 @@ export function AuthPage({ mode }: { mode: "login" | "signup" }) {
         setEmail("");
         setPassword("");
         setConfirmPassword("");
-        setAgreeTerms(false);
       }
     } else {
       const result = await login(email, password);
@@ -104,8 +102,7 @@ export function AuthPage({ mode }: { mode: "login" | "signup" }) {
     email &&
     password &&
     confirmPassword &&
-    password === confirmPassword &&
-    agreeTerms;
+    password === confirmPassword;
   const isValid = mode === "login" ? isLoginValid : isSignupValid;
 
   return (
@@ -127,7 +124,7 @@ export function AuthPage({ mode }: { mode: "login" | "signup" }) {
               <Sparkles className="h-4 w-4 text-primary-foreground" />
             </div>
             <span className="text-lg font-bold text-foreground">
-              PlaceReady AI
+              Evalyze
             </span>
           </div>
           <h1 className="text-2xl font-bold text-foreground">
@@ -222,7 +219,7 @@ export function AuthPage({ mode }: { mode: "login" | "signup" }) {
             </div>
           )}
 
-          {mode === "login" ? (
+          {mode === "login" && (
             <div className="flex items-center gap-2">
               <Checkbox
                 id="remember"
@@ -231,17 +228,6 @@ export function AuthPage({ mode }: { mode: "login" | "signup" }) {
               />
               <Label htmlFor="remember" className="text-sm text-muted-foreground">
                 Remember me
-              </Label>
-            </div>
-          ) : (
-            <div className="flex items-center gap-2">
-              <Checkbox
-                id="terms"
-                checked={agreeTerms}
-                onCheckedChange={(v) => setAgreeTerms(!!v)}
-              />
-              <Label htmlFor="terms" className="text-sm text-muted-foreground">
-                I agree to the Terms of Service and Privacy Policy
               </Label>
             </div>
           )}
@@ -330,10 +316,6 @@ export function AuthPage({ mode }: { mode: "login" | "signup" }) {
                 </div>
               </div>
             ))}
-          </div>
-          <div className="mt-8 flex items-center gap-2 text-sm text-primary-foreground/60">
-            <CheckCircle2 className="h-4 w-4" />
-            Trusted by 10,000+ students across 50+ universities
           </div>
         </div>
       </div>

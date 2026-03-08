@@ -14,13 +14,33 @@ export async function POST(req: NextRequest) {
 
         console.log('[api/profile/upsert] Attempting upsert for:', { userId, email });
 
-        const { data, error } = await supabaseAdmin
+        // Check if profile already exists
+        const { data: existing } = await supabaseAdmin
             .from('profiles')
-            .upsert(
-                { id: userId, name, email, role: 'student' },
-                { onConflict: 'id' }
-            )
-            .select()
+            .select('id')
+            .eq('id', userId)
+            .single()
+
+        let data, error
+
+        if (existing) {
+            // Profile exists → update name/email only, do NOT overwrite role
+            const result = await supabaseAdmin
+                .from('profiles')
+                .update({ name, email })
+                .eq('id', userId)
+                .select()
+            data = result.data
+            error = result.error
+        } else {
+            // New profile → insert with default role 'student'
+            const result = await supabaseAdmin
+                .from('profiles')
+                .insert({ id: userId, name, email, role: 'student' })
+                .select()
+            data = result.data
+            error = result.error
+        }
 
         if (error) {
             console.error('[api/profile/upsert] Supabase Error Details:', {

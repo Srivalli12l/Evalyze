@@ -75,10 +75,11 @@ function generateFeedback(overall: number): string {
 export async function POST(req: NextRequest) {
     try {
         const body = await req.json()
-        const { type, answers, userId } = body as {
+        const { type, answers, userId, analysisId } = body as {
             type?: string
             answers?: number[]
             userId?: string
+            analysisId?: string
         }
 
         // ── Auth check ───────────────────────────────────────────────
@@ -133,11 +134,18 @@ export async function POST(req: NextRequest) {
 
         // ── Persist to Supabase ──────────────────────────────────────
 
-        // Check if a row already exists for this user
-        const { data: existing } = await supabaseAdmin
+        // Find existing assessment for THIS specific analysis session
+        let existingQuery = supabaseAdmin
             .from('assessment_results')
             .select('id, skill_score, personality_score')
             .eq('user_id', userId)
+
+        // Link to specific analysis session if provided
+        if (analysisId) {
+            existingQuery = existingQuery.eq('analysis_id', analysisId)
+        }
+
+        const { data: existing } = await existingQuery
             .order('created_at', { ascending: false })
             .limit(1)
             .maybeSingle()
@@ -155,7 +163,7 @@ export async function POST(req: NextRequest) {
 
         const feedback = generateFeedback(overall_score)
 
-        console.log('[api/assessment/submit] Request for:', { userId, type, skill_score, personality_score });
+        console.log('[api/assessment/submit] Request for:', { userId, type, skill_score, personality_score, analysisId });
         console.log('[api/assessment/submit] Merged scores:', { mergedSkill, mergedPersonality, overall_score });
 
         let dbError: any = null
@@ -182,6 +190,7 @@ export async function POST(req: NextRequest) {
                 .from('assessment_results')
                 .insert({
                     user_id: userId,
+                    analysis_id: analysisId || null,
                     skill_score: mergedSkill,
                     personality_score: mergedPersonality,
                     overall_score,
