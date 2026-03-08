@@ -134,12 +134,17 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   // ── Helpers ──────────────────────────────────────────────────────────
 
   /** Upsert a row in the profiles table for the authenticated user */
-  const upsertProfile = useCallback(async (userId: string, name: string, email: string) => {
+  const upsertProfile = useCallback(async (name: string, email: string) => {
     try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token;
       const response = await fetch('/api/profile/upsert', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId, name, email })
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {})
+        },
+        body: JSON.stringify({ name, email })
       });
 
       const data = await response.json();
@@ -157,7 +162,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
    */
   const fetchResults = useCallback(async (userId: string) => {
     try {
-      const response = await fetch(`/api/results?userId=${userId}`);
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token;
+      const response = await fetch(`/api/results`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {}
+      });
       const data = await response.json();
 
       if (data.success && data.data) {
@@ -315,7 +324,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
       // Upsert profile row for the new user
       if (data.user) {
-        await upsertProfile(data.user.id, name, email);
+        await upsertProfile(name, email);
       }
 
       console.log("Signup successful", data);
@@ -361,7 +370,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         });
 
         // Upsert profile row on login (ensures it exists)
-        await upsertProfile(data.user.id, userName, data.user.email!);
+        await upsertProfile(userName, data.user.email!);
 
         // Fetch the user's role from the database to decide where to redirect
         const { data: profile } = await supabase
@@ -438,10 +447,12 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       const formData = new FormData();
       formData.append("file", file);
       formData.append("target_role", target_role);
-      formData.append("userId", session.user.id);
 
       const response = await fetch('/api/resume/analyze', {
         method: 'POST',
+        headers: {
+          Authorization: `Bearer ${session.access_token}`
+        },
         body: formData
       });
 
@@ -502,11 +513,13 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     try {
       const response = await fetch('/api/assessment/submit', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${session.access_token}`
+        },
         body: JSON.stringify({
           type: 'skill',
           answers,
-          userId: session.user.id,
           analysisId: currentAnalysisId,
         })
       });
@@ -536,11 +549,13 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     try {
       const response = await fetch('/api/assessment/submit', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${session.access_token}`
+        },
         body: JSON.stringify({
           type: 'personality',
           answers,
-          userId: session.user.id,
           analysisId: currentAnalysisId,
         })
       });
@@ -568,9 +583,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         try {
           await fetch('/api/analysis-history/save', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${session.access_token}`
+            },
             body: JSON.stringify({
-              user_id: session.user.id,
               resume_name: resumeFile?.name || 'resume.pdf',
               target_role: selectedRole || 'Unknown',
               overall_score: overallScore,

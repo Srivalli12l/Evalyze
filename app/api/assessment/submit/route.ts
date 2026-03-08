@@ -74,20 +74,23 @@ function generateFeedback(overall: number): string {
 
 export async function POST(req: NextRequest) {
     try {
+        const authHeader = req.headers.get('authorization')
+        if (!authHeader || !authHeader.startsWith('Bearer ')) {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+        }
+        const token = authHeader.replace('Bearer ', '')
+        const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(token)
+
+        if (authError || !user) {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+        }
+        const userId = user.id
+
         const body = await req.json()
-        const { type, answers, userId, analysisId } = body as {
+        const { type, answers, analysisId } = body as {
             type?: string
             answers?: number[]
-            userId?: string
             analysisId?: string
-        }
-
-        // ── Auth check ───────────────────────────────────────────────
-        if (!userId) {
-            return NextResponse.json(
-                { error: 'Authentication required. No userId provided.' },
-                { status: 401 },
-            )
         }
 
         // ── Validate ─────────────────────────────────────────────────

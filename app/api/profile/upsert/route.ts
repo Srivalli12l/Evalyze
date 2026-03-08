@@ -3,11 +3,23 @@ import { supabaseAdmin } from '@/lib/supabase-admin'
 
 export async function POST(req: NextRequest) {
     try {
-        const { userId, name, email } = await req.json()
+        const authHeader = req.headers.get('authorization')
+        if (!authHeader || !authHeader.startsWith('Bearer ')) {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+        }
+        const token = authHeader.replace('Bearer ', '')
+        const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(token)
 
-        if (!userId || !email) {
+        if (authError || !user) {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+        }
+        const userId = user.id
+
+        const { name, email } = await req.json()
+
+        if (!email) {
             return NextResponse.json(
-                { error: 'userId and email are required' },
+                { error: 'email is required' },
                 { status: 400 }
             )
         }

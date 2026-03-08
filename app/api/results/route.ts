@@ -3,15 +3,17 @@ import { supabaseAdmin } from "@/lib/supabase-admin";
 
 export async function GET(req: Request) {
     try {
-        const { searchParams } = new URL(req.url);
-        const userId = searchParams.get("userId");
-
-        if (!userId) {
-            return NextResponse.json(
-                { error: "User ID is required" },
-                { status: 400 }
-            );
+        const authHeader = req.headers.get('authorization')
+        if (!authHeader || !authHeader.startsWith('Bearer ')) {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
         }
+        const token = authHeader.replace('Bearer ', '')
+        const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(token)
+
+        if (authError || !user) {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+        }
+        const userId = user.id
 
         // 1. Fetch the LATEST resume analysis (with strengths, gaps, feedback)
         const resumeQuery = await supabaseAdmin

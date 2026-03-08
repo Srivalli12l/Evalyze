@@ -33,9 +33,11 @@ export function AnalysisHistory() {
         if (!session?.user?.id) return;
         const fetchHistory = async () => {
             try {
-                const res = await fetch(
-                    `/api/analysis-history?userId=${session.user.id}`
-                );
+                const res = await fetch(`/api/analysis-history`, {
+                    headers: {
+                        Authorization: `Bearer ${session.access_token}`
+                    }
+                });
                 const data = await res.json();
                 if (data.success) {
                     setRows(data.data || []);

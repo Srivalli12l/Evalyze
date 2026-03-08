@@ -11,17 +11,21 @@ export const dynamic = 'force-dynamic'
 export async function POST(req: NextRequest) {
     try {
         // ── 1. Parse FormData ──────────────────────────
+        const authHeader = req.headers.get('authorization')
+        if (!authHeader || !authHeader.startsWith('Bearer ')) {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+        }
+        const token = authHeader.replace('Bearer ', '')
+        const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(token)
+
+        if (authError || !user) {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+        }
+        const userId = user.id
+
         const formData = await req.formData()
         const file = formData.get('file') as File | null
         const target_role = formData.get('target_role') as string | null
-        const userId = formData.get('userId') as string | null
-
-        if (!userId) {
-            return NextResponse.json(
-                { success: false, error: 'Authentication required. No userId provided.' },
-                { status: 401 }
-            )
-        }
 
         if (!file) {
             return NextResponse.json(

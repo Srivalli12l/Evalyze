@@ -3,12 +3,24 @@ import { supabaseAdmin } from "@/lib/supabase-admin";
 
 export async function POST(req: Request) {
     try {
-        const body = await req.json();
-        const { user_id, resume_name, target_role, overall_score, readiness_level, result_json } = body;
+        const authHeader = req.headers.get('authorization')
+        if (!authHeader || !authHeader.startsWith('Bearer ')) {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+        }
+        const token = authHeader.replace('Bearer ', '')
+        const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(token)
 
-        if (!user_id || !target_role) {
+        if (authError || !user) {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+        }
+        const user_id = user.id
+
+        const body = await req.json();
+        const { resume_name, target_role, overall_score, readiness_level, result_json } = body;
+
+        if (!target_role) {
             return NextResponse.json(
-                { error: "user_id and target_role are required" },
+                { error: "target_role is required" },
                 { status: 400 }
             );
         }
