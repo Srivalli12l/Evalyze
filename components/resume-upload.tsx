@@ -108,6 +108,11 @@ export function ResumeUpload() {
       await analysisPromise;
       setAnalysisState("done");
 
+      // Ensure the mobile browser scrolls down to the newly rendered results
+      setTimeout(() => {
+        document.getElementById("analysis-result")?.scrollIntoView({ behavior: "smooth" });
+      }, 100);
+
       // User will manually click "Continue to Skill Assessment" button
 
     } catch (error) {
@@ -310,7 +315,7 @@ export function ResumeUpload() {
           )}
 
           {analysisState === "done" && analysis && (
-            <div className="flex flex-col gap-4">
+            <div id="analysis-result" className="flex flex-col gap-4">
               {/* Role Fit Score */}
               <div className="rounded-xl border border-border bg-card p-6">
                 <h3 className="mb-3 text-sm font-medium text-muted-foreground">
