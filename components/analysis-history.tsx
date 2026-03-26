@@ -83,7 +83,7 @@ export function AnalysisHistory() {
     return (
         <div className="p-6 md:p-10">
             {/* Header */}
-            <div className="mb-8 flex items-center justify-between">
+            <div className="mb-8 flex flex-wrap items-center justify-between gap-4">
                 <div className="flex items-center gap-3">
                     <Button
                         variant="ghost"
@@ -126,7 +126,7 @@ export function AnalysisHistory() {
             ) : (
                 <div className="rounded-xl border border-border bg-card overflow-hidden">
                     <div className="overflow-x-auto">
-                        <table className="w-full text-sm">
+                <table className="w-full text-sm min-w-[600px]">
                             <thead>
                                 <tr className="border-b border-border bg-muted/50">
                                     <th className="px-4 py-3 text-left font-medium text-muted-foreground">

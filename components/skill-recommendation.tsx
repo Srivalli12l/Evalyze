@@ -66,7 +66,7 @@ export function SkillRecommendationCard({
     };
 
     return (
-        <div className="mb-8 overflow-hidden rounded-none border border-border bg-card">
+        <div className="mb-8 overflow-hidden rounded-xl border border-border bg-card">
             {/* Clickable Header */}
             <div
                 className="flex cursor-pointer border-l-4 border-l-transparent items-center justify-between p-6 transition-colors hover:bg-muted/30 hover:border-l-primary"
@@ -82,7 +82,7 @@ export function SkillRecommendationCard({
                 aria-expanded={isOpen}
             >
                 <div className="flex items-center gap-3">
-                    <div className="rounded-none bg-primary/10 p-2 text-primary">
+                    <div className="rounded-lg bg-primary/10 p-2 text-primary">
                         <Sparkles className="h-5 w-5" />
                     </div>
                     <h2 className="text-lg font-semibold text-foreground">
@@ -112,7 +112,7 @@ export function SkillRecommendationCard({
                                 <p className="text-sm">Analyzing missing skills...</p>
                             </div>
                         ) : error ? (
-                            <div className="flex items-center gap-2 rounded-none bg-destructive/10 p-4 text-destructive">
+                            <div className="flex items-center gap-2 rounded-lg bg-destructive/10 p-4 text-destructive">
                                 <AlertCircle className="h-4 w-4" />
                                 <p className="text-sm font-medium">Skill recommendation unavailable.</p>
                             </div>
@@ -125,7 +125,7 @@ export function SkillRecommendationCard({
                                     {skills.map((skill, i) => (
                                         <div
                                             key={i}
-                                            className="rounded-none border border-border bg-card px-4 py-2 text-sm font-medium text-foreground shadow-sm transition-colors hover:border-primary/50 hover:bg-muted/50"
+                                            className="rounded-lg border border-border bg-card px-4 py-2 text-sm font-medium text-foreground shadow-sm transition-colors hover:border-primary/50 hover:bg-muted/50"
                                         >
                                             {skill}
                                         </div>

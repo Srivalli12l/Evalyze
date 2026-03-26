@@ -88,9 +88,6 @@ export function AuthPage({ mode }: { mode: "login" | "signup" }) {
       if (result.success) {
         alert("Account created successfully! Please check your email to verify your account.");
         setIsSignupSuccess(true);
-        if (result.message) {
-          setMessage(result.message);
-        }
       }
     } else {
       const result = await login(email, password);
@@ -110,7 +107,7 @@ export function AuthPage({ mode }: { mode: "login" | "signup" }) {
   return (
     <div className="flex min-h-screen">
       {/* Left side - Form */}
-      <div className="flex flex-1 flex-col justify-center px-8 py-12 lg:max-w-[480px] lg:px-16">
+      <div className="flex flex-1 flex-col justify-center px-6 sm:px-8 py-12 lg:max-w-[480px] lg:px-16">
         <button
           type="button"
           onClick={() => setCurrentStep("landing")}

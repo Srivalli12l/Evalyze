@@ -139,7 +139,7 @@ export function ResumeUpload() {
 
       <div className="grid gap-8 lg:grid-cols-2">
         {/* Left Column - Upload */}
-        <div className="flex flex-col gap-6">
+        <div className="flex flex-col gap-6 min-w-0">
           {/* Step 1: Select Role */}
           <div className="rounded-xl border border-border bg-card p-6">
             <div className="mb-4 flex items-center gap-2">
@@ -291,9 +291,9 @@ export function ResumeUpload() {
         </div>
 
         {/* Right Column - Results */}
-        <div className="flex flex-col gap-6">
+        <div className="flex flex-col gap-6 min-w-0">
           {analysisState === "idle" && (
-            <div className="flex flex-1 flex-col items-center justify-center rounded-xl border border-dashed border-border p-12 text-center">
+            <div className="flex flex-1 flex-col items-center justify-center rounded-xl border border-dashed border-border p-6 md:p-12 text-center">
               {analysisError && (
                 <div className="mb-4 w-full rounded-lg border border-destructive/50 bg-destructive/10 p-3 text-sm text-destructive">
                   {analysisError}
@@ -310,7 +310,7 @@ export function ResumeUpload() {
           )}
 
           {analysisState === "analyzing" && (
-            <div className="flex flex-1 flex-col items-center justify-center rounded-xl border border-primary/20 bg-primary/5 p-12 text-center">
+            <div className="flex flex-1 flex-col items-center justify-center rounded-xl border border-primary/20 bg-primary/5 p-6 md:p-12 text-center">
               <Loader2 className="mb-4 h-12 w-12 animate-spin text-primary" />
               <p className="font-medium text-foreground">
                 AI is analyzing your resume...
@@ -392,7 +392,7 @@ export function ResumeUpload() {
                   {analysis.strengths.map((s, i) => (
                     <div key={i} className="flex items-start gap-2">
                       <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-secondary" />
-                      <p className="text-sm text-foreground">{s}</p>
+                      <p className="text-sm text-foreground break-words">{s}</p>
                     </div>
                   ))}
                 </div>
@@ -407,7 +407,7 @@ export function ResumeUpload() {
                   {analysis.gaps.map((g, i) => (
                     <div key={i} className="flex items-start gap-2">
                       <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-accent" />
-                      <p className="text-sm text-foreground">{g}</p>
+                      <p className="text-sm text-foreground break-words">{g}</p>
                     </div>
                   ))}
                 </div>
@@ -416,11 +416,11 @@ export function ResumeUpload() {
               {/* Continue Button */}
               <Button
                 size="lg"
-                className="gap-2"
+                className="gap-2 w-full sm:w-auto h-auto whitespace-normal py-3 text-center"
                 onClick={() => setCurrentStep("skill-assessment")}
               >
-                Continue to Skill Assessment
-                <ArrowRight className="h-4 w-4" />
+                <span>Continue to Skill Assessment</span>
+                <ArrowRight className="hidden sm:inline-block h-4 w-4 shrink-0" />
               </Button>
             </div>
           )}

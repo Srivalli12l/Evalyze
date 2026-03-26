@@ -16,7 +16,7 @@ export function DashboardContent() {
 
   return (
     <div className="p-6 md:p-10">
-      <div className="mb-8 flex items-center justify-between">
+      <div className="mb-8 flex flex-wrap items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-foreground">
             Welcome, {user?.name}!
@@ -36,7 +36,7 @@ export function DashboardContent() {
         </Button>
       </div>
 
-      <div className="rounded-2xl border border-border bg-card p-10 text-center">
+      <div className="rounded-2xl border border-border bg-card p-6 md:p-10 text-center">
         <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
           <Upload className="h-8 w-8 text-primary" />
         </div>
@@ -49,11 +49,11 @@ export function DashboardContent() {
         </p>
         <Button
           size="lg"
-          className="gap-2"
+          className="gap-2 w-full sm:w-auto h-auto whitespace-normal py-3 px-4 sm:px-8 text-center"
           onClick={() => setCurrentStep("resume-upload")}
         >
-          Upload Resume & Select Role
-          <ArrowRight className="h-4 w-4" />
+          <span>Upload Resume & Select Role</span>
+          <ArrowRight className="hidden sm:inline-block h-4 w-4 shrink-0" />
         </Button>
       </div>
 

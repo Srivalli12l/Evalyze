@@ -24,13 +24,25 @@ import {
 function AnimatedScore({
   target,
   size = 180,
+  mobileSize = 140,
   strokeWidth = 14,
 }: {
   target: number;
   size?: number;
+  mobileSize?: number;
   strokeWidth?: number;
 }) {
   const [value, setValue] = useState(0);
+  const [currentSize, setCurrentSize] = useState(size);
+
+  useEffect(() => {
+    const updateSize = () => {
+      setCurrentSize(window.innerWidth < 640 ? mobileSize : size);
+    };
+    updateSize();
+    window.addEventListener('resize', updateSize);
+    return () => window.removeEventListener('resize', updateSize);
+  }, [size, mobileSize]);
 
   useEffect(() => {
     let frame: number;
@@ -49,24 +61,24 @@ function AnimatedScore({
     return () => cancelAnimationFrame(frame);
   }, [target]);
 
-  const radius = (size - strokeWidth) / 2;
+  const radius = (currentSize - strokeWidth) / 2;
   const circumference = radius * 2 * Math.PI;
   const offset = circumference - (value / 100) * circumference;
 
   return (
     <div className="relative inline-flex items-center justify-center">
-      <svg width={size} height={size} className="-rotate-90">
+      <svg width={currentSize} height={currentSize} className="-rotate-90">
         <circle
-          cx={size / 2}
-          cy={size / 2}
+          cx={currentSize / 2}
+          cy={currentSize / 2}
           r={radius}
           strokeWidth={strokeWidth}
           fill="none"
           className="stroke-muted"
         />
         <circle
-          cx={size / 2}
-          cy={size / 2}
+          cx={currentSize / 2}
+          cy={currentSize / 2}
           r={radius}
           strokeWidth={strokeWidth}
           fill="none"
@@ -79,7 +91,7 @@ function AnimatedScore({
         />
       </svg>
       <div className="absolute flex flex-col items-center">
-        <span className="text-5xl font-bold text-foreground">{value}</span>
+        <span className="text-4xl sm:text-5xl font-bold text-foreground">{value}</span>
         <span className="text-sm text-muted-foreground">/100</span>
       </div>
     </div>
@@ -120,7 +132,7 @@ export function ResultsPage() {
   return (
     <div className="mx-auto max-w-4xl p-6 md:p-10">
       {/* Section A: Overall Readiness */}
-      <div className="mb-8 rounded-2xl border border-border bg-primary/5 p-10 text-center">
+      <div className="mb-8 rounded-2xl border border-border bg-primary/5 p-6 md:p-10 text-center">
         <AnimatedScore target={overallScore} />
         <h1 className={cn("mt-4 text-2xl font-bold", readinessColor)}>
           {readinessLevel} Readiness
@@ -141,7 +153,7 @@ export function ResultsPage() {
             <Sparkles className="h-5 w-5 text-primary" />
             Analysis Feedback
           </h2>
-          <p className="text-foreground leading-relaxed">
+          <p className="text-foreground leading-relaxed break-words">
             {resumeAnalysis.feedback}
           </p>
         </div>
@@ -200,7 +212,7 @@ export function ResultsPage() {
             {resumeAnalysis.strengths.map((s, i) => (
               <div key={i} className="flex items-start gap-3">
                 <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-secondary" />
-                <p className="text-sm leading-relaxed text-foreground">{s}</p>
+                <p className="text-sm leading-relaxed text-foreground break-words">{s}</p>
               </div>
             ))}
           </div>
@@ -218,7 +230,7 @@ export function ResultsPage() {
             {resumeAnalysis.gaps.map((gap, i) => (
               <div key={i} className="flex items-start gap-3">
                 <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-accent" />
-                <p className="text-sm leading-relaxed text-foreground">{gap}</p>
+                <p className="text-sm leading-relaxed text-foreground break-words">{gap}</p>
               </div>
             ))}
           </div>

@@ -216,7 +216,7 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
       </aside>
 
       {/* Mobile header */}
-      <div className="flex flex-1 flex-col">
+      <div className="flex flex-1 flex-col min-w-0">
         <header className="flex items-center justify-between border-b border-border bg-card px-4 py-3 lg:hidden">
           <div className="flex items-center gap-2">
             <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary">
@@ -239,7 +239,7 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
 
         {/* Mobile sidebar overlay */}
         {mobileMenuOpen && (
-          <div className="absolute inset-0 z-50 lg:hidden">
+          <div className="fixed inset-0 z-50 lg:hidden">
             <div
               className="absolute inset-0 bg-foreground/20"
               onClick={() => setMobileMenuOpen(false)}
@@ -247,7 +247,7 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
               role="button"
               tabIndex={-1}
             />
-            <div className="relative z-10 w-64 min-h-screen bg-card border-r border-border flex flex-col">
+            <div className="relative z-10 w-64 min-h-screen overflow-y-auto bg-card border-r border-border flex flex-col">
               <div className="flex items-center justify-between border-b border-border p-5">
                 <div className="flex items-center gap-2">
                   <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
