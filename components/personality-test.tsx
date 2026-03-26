@@ -312,11 +312,11 @@ export function PersonalityTest() {
         {currentS === totalS - 1 ? (
           <Button
             onClick={handleSubmit}
-            disabled={!allAnswered}
+            disabled={!allAnswered || isSubmitting}
             className="gap-2"
           >
-            Submit
-            <ArrowRight className="h-4 w-4" />
+            {isSubmitting ? "Submitting..." : "Submit"}
+            {!isSubmitting && <ArrowRight className="h-4 w-4" />}
           </Button>
         ) : (
           <Button

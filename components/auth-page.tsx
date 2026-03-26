@@ -67,28 +67,30 @@ export function AuthPage({ mode }: { mode: "login" | "signup" }) {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
-  const [showVerificationMessage, setShowVerificationMessage] = useState(false);
+  const [message, setMessage] = useState("");
+  const [isSignupSuccess, setIsSignupSuccess] = useState(false);
 
   // Clear error when switching modes or changing inputs
   React.useEffect(() => {
     clearAuthError();
-    setShowVerificationMessage(false);
+    setMessage("");
+    setIsSignupSuccess(false);
   }, [mode, clearAuthError]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     clearAuthError();
-    setShowVerificationMessage(false);
+    setMessage("");
+    setIsSignupSuccess(false);
 
     if (mode === "signup") {
       const result = await signup(email, password, name);
       if (result.success) {
-        setShowVerificationMessage(true);
-        // Clear form
-        setName("");
-        setEmail("");
-        setPassword("");
-        setConfirmPassword("");
+        alert("Account created successfully! Please check your email to verify your account.");
+        setIsSignupSuccess(true);
+        if (result.message) {
+          setMessage(result.message);
+        }
       }
     } else {
       const result = await login(email, password);
@@ -143,10 +145,10 @@ export function AuthPage({ mode }: { mode: "login" | "signup" }) {
             </div>
           )}
 
-          {/* Verification Success Message */}
-          {showVerificationMessage && (
-            <div className="mt-4 rounded-lg border border-secondary/50 bg-secondary/10 p-3 text-sm text-secondary">
-              <CheckCircle2 className="mb-1 inline h-4 w-4" /> Account created successfully! Please check your email to verify your account before logging in.
+          {isSignupSuccess && mode === "signup" && (
+            <div className="mt-4 rounded-lg border border-green-500/20 bg-green-500/10 p-4 text-green-500 mb-6">
+              <p className="font-semibold mb-1">Account created successfully!</p>
+              <p className="text-sm">Please check your email inbox to verify your email address.</p>
             </div>
           )}
         </div>

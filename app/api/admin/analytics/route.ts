@@ -11,7 +11,7 @@ export async function GET(req: NextRequest) {
         }
 
         // 1. Fetch Summary Stats
-        const { count: userCount } = await supabaseAdmin.from('profiles').select('*', { count: 'exact', head: true })
+        const { count: userCount } = await supabaseAdmin.from('profile').select('*', { count: 'exact', head: true })
         const { count: resumeCount } = await supabaseAdmin.from('resume_analysis').select('*', { count: 'exact', head: true })
         const { count: skillCount } = await supabaseAdmin.from('assessment_results').select('*', { count: 'exact', head: true }).not('skill_score', 'is', null)
         const { count: personalityCount } = await supabaseAdmin.from('assessment_results').select('*', { count: 'exact', head: true }).not('personality_score', 'is', null)

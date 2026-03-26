@@ -147,6 +147,19 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         body: JSON.stringify({ name, email })
       });
 
+      if (!response.ok) {
+        const text = await response.text();
+        console.error('[upsertProfile] API error (HTTP', response.status, '):', text.substring(0, 200));
+        return;
+      }
+
+      const contentType = response.headers.get('content-type') || '';
+      if (!contentType.includes('application/json')) {
+        const text = await response.text();
+        console.error('[upsertProfile] Invalid response (not JSON):', text.substring(0, 200));
+        return;
+      }
+
       const data = await response.json();
       if (!data.success) {
         console.error('[upsertProfile] API error:', data.error);
@@ -236,14 +249,24 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     // Helper: check role and redirect admin if needed
     async function handleSessionUser(session: Session) {
       const metadata = session.user.user_metadata;
+      const userName = metadata?.name || session.user.email!.split("@")[0];
       setUser({
         email: session.user.email!,
-        name: metadata?.name || session.user.email!.split("@")[0],
+        name: userName,
       });
+
+      // === Profile Creation / Upsert ===
+      // This guarantees the profile is created/updated on ANY valid session
+      // (login, auto-login after signup, page refresh, etc.)
+      try {
+        await upsertProfile(userName, session.user.email!);
+      } catch (err) {
+        console.error("Profile upsert failed during session init:", err);
+      }
 
       // Check if user is admin — if so, redirect to /admin
       const { data: profile } = await supabase
-        .from('profiles')
+        .from('profile')
         .select('role')
         .eq('id', session.user.id)
         .single();
@@ -285,7 +308,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     });
 
     return () => subscription.unsubscribe();
-  }, []);
+  }, [upsertProfile]);
 
   // ── Auth methods ────────────────────────────────────────────────────
 
@@ -298,6 +321,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setAuthError(null);
 
     try {
+      const siteUrl = process.env.NEXT_PUBLIC_SITE_URL
+        || (typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000');
+
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
@@ -305,6 +331,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           data: {
             name,
           },
+          emailRedirectTo: siteUrl,
         },
       });
 
@@ -322,9 +349,17 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         return { success: false, error: error.message };
       }
 
-      // Upsert profile row for the new user
-      if (data.user) {
-        await upsertProfile(name, email);
+      // NOTE: Do NOT call upsertProfile() here.
+      // When email confirmation is required, there is no active session after signUp().
+      // The profile will be created on first login instead (see handleSessionUser).
+
+      // If email confirmation is required, Supabase returns no session.
+      // Explicitly sign out to prevent any partial auto-login via onAuthStateChange.
+      if (!data.session) {
+        await supabase.auth.signOut();
+        console.log("Signup successful — email confirmation required");
+        setAuthLoading(false);
+        return { success: true, message: "Account created. Please check your email to confirm." };
       }
 
       console.log("Signup successful", data);
@@ -337,7 +372,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       setAuthLoading(false);
       return { success: false, error: errorMessage };
     }
-  }, [upsertProfile]);
+  }, []);
 
   const login = useCallback(async (
     email: string,
@@ -369,12 +404,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           name: userName,
         });
 
-        // Upsert profile row on login (ensures it exists)
-        await upsertProfile(userName, data.user.email!);
-
         // Fetch the user's role from the database to decide where to redirect
         const { data: profile } = await supabase
-          .from('profiles')
+          .from('profile')
           .select('role')
           .eq('id', data.user.id)
           .single();
@@ -448,21 +480,43 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       formData.append("file", file);
       formData.append("target_role", target_role);
 
-      const response = await fetch('/api/resume/analyze', {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${session.access_token}`,
-          Accept: 'application/json'
-        },
-        body: formData,
-        credentials: 'same-origin'
-      });
+      // Use AbortController for mobile timeout (55s to stay within Vercel limits)
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 55000);
+
+      let response: Response;
+      try {
+        response = await fetch('/api/resume/analyze', {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${session.access_token}`,
+            Accept: 'application/json'
+          },
+          body: formData,
+          credentials: 'same-origin',
+          signal: controller.signal,
+        });
+      } catch (fetchErr: any) {
+        clearTimeout(timeoutId);
+        if (fetchErr.name === 'AbortError') {
+          throw new Error('Analysis timed out. Please try again with a smaller resume or on a faster connection.');
+        }
+        throw new Error(`Network error: ${fetchErr.message}. Check your internet connection and try again.`);
+      }
+      clearTimeout(timeoutId);
+
+      // Guard: check HTTP status first
+      if (!response.ok) {
+        const text = await response.text();
+        console.error('[analyzeResume] API error (HTTP', response.status, '):', text.substring(0, 200));
+        throw new Error(`Analysis failed (HTTP ${response.status}). Please try again.`);
+      }
 
       // Guard: ensure response is JSON before parsing
       const contentType = response.headers.get('content-type') || '';
       if (!contentType.includes('application/json')) {
         const text = await response.text();
-        console.error('Expected JSON but got:', text.substring(0, 200));
+        console.error('[analyzeResume] Expected JSON but got:', text.substring(0, 200));
         throw new Error('Server returned non-JSON response. Please try again.');
       }
 

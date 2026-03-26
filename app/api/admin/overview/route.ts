@@ -12,7 +12,7 @@ export async function GET(req: NextRequest) {
 
         // 1. Fetch Total Users (profiles table)
         const { count: userCount, error: userError } = await supabaseAdmin
-            .from('profiles')
+            .from('profile')
             .select('*', { count: 'exact', head: true })
 
         // 2. Fetch Total Resume Analyses

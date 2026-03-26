@@ -20,7 +20,7 @@ export async function GET() {
 
         // ── 2. Test connection by reading from profiles ─────────────
         const { data: pingData, error: pingError } = await supabaseAdmin
-            .from('profiles')
+            .from('profile')
             .select('id')
             .limit(1)
 
@@ -92,7 +92,7 @@ export async function GET() {
 
         // 4a. Upsert into profiles
         const { error: profileError } = await supabaseAdmin
-            .from('profiles')
+            .from('profile')
             .upsert({
                 id: testUser.id,
                 name: testUser.user_metadata?.name || 'Test User',

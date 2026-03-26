@@ -51,7 +51,7 @@ export async function requireAdmin(req: NextRequest): Promise<AdminCheckResult> 
 
     // Check the role in the database — this is the trusted source of truth
     const { data: profile, error: profileError } = await supabaseAdmin
-        .from('profiles')
+        .from('profile')
         .select('role')
         .eq('id', user.id)
         .single()

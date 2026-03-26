@@ -53,6 +53,7 @@ export function ResumeUpload() {
   const [uploadProgress, setUploadProgress] = useState(0);
   const [analysisState, setAnalysisState] = useState<AnalysisState>("idle");
   const [analysisPhase, setAnalysisPhase] = useState("");
+  const [analysisError, setAnalysisError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFile = useCallback(
@@ -83,6 +84,7 @@ export function ResumeUpload() {
     if (!resumeFile || !selectedRole) return;
 
     setAnalysisState("analyzing");
+    setAnalysisError(null);
 
     const phases = [
       "Preparing analysis...",
@@ -115,10 +117,10 @@ export function ResumeUpload() {
 
       // User will manually click "Continue to Skill Assessment" button
 
-    } catch (error) {
+    } catch (error: any) {
       console.error("Analysis Failed:", error);
       setAnalysisState("idle");
-      // Could add a toast notification here
+      setAnalysisError(error?.message || "Resume analysis failed. Please try again.");
     }
   };
 
@@ -292,6 +294,11 @@ export function ResumeUpload() {
         <div className="flex flex-col gap-6">
           {analysisState === "idle" && (
             <div className="flex flex-1 flex-col items-center justify-center rounded-xl border border-dashed border-border p-12 text-center">
+              {analysisError && (
+                <div className="mb-4 w-full rounded-lg border border-destructive/50 bg-destructive/10 p-3 text-sm text-destructive">
+                  {analysisError}
+                </div>
+              )}
               <FileText className="mb-4 h-12 w-12 text-muted-foreground/30" />
               <p className="font-medium text-muted-foreground">
                 Select role and upload resume to begin

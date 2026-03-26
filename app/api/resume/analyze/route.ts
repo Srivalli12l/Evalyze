@@ -128,7 +128,11 @@ Respond with ONLY this JSON structure:
             .single()
 
         if (dbError) {
-            console.error('[resume/analyze] DB Error (non-blocking):', dbError.message)
+            console.error('[resume/analyze] DB Error:', dbError.message)
+            return NextResponse.json(
+                { success: false, error: 'Failed to save analysis to database', details: dbError.message },
+                { status: 500 }
+            )
         }
 
         // ── 5. Return result ─────────────────────────────────────────

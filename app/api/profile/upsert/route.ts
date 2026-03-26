@@ -28,7 +28,7 @@ export async function POST(req: NextRequest) {
 
         // Check if profile already exists
         const { data: existing } = await supabaseAdmin
-            .from('profiles')
+            .from('profile')
             .select('id')
             .eq('id', userId)
             .single()
@@ -38,7 +38,7 @@ export async function POST(req: NextRequest) {
         if (existing) {
             // Profile exists → update name/email only, do NOT overwrite role
             const result = await supabaseAdmin
-                .from('profiles')
+                .from('profile')
                 .update({ name, email })
                 .eq('id', userId)
                 .select()
@@ -47,7 +47,7 @@ export async function POST(req: NextRequest) {
         } else {
             // New profile → insert with default role 'student'
             const result = await supabaseAdmin
-                .from('profiles')
+                .from('profile')
                 .insert({ id: userId, name, email, role: 'student' })
                 .select()
             data = result.data
