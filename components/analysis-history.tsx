@@ -11,6 +11,7 @@ import {
     RefreshCw,
     History,
     ArrowLeft,
+    Trash2,
 } from "lucide-react";
 
 type HistoryRow = {
@@ -40,7 +41,9 @@ export function AnalysisHistory() {
                 });
                 const data = await res.json();
                 if (data.success) {
-                    setRows(data.data || []);
+                    const allData = data.data || [];
+                    const hiddenIds = JSON.parse(localStorage.getItem('hiddenAnalysisIds') || '[]');
+                    setRows(allData.filter((r: HistoryRow) => !hiddenIds.includes(r.id)));
                 }
             } catch (err) {
                 console.error("[AnalysisHistory] Fetch failed:", err);
@@ -186,20 +189,38 @@ export function AnalysisHistory() {
                                             })}
                                         </td>
                                         <td className="px-4 py-3 text-center">
-                                            <Button
-                                                variant="outline"
-                                                size="sm"
-                                                className="gap-1.5"
-                                                disabled={downloadingId === row.id}
-                                                onClick={() => handleDownload(row)}
-                                            >
-                                                {downloadingId === row.id ? (
-                                                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                                                ) : (
-                                                    <Download className="h-3.5 w-3.5" />
-                                                )}
-                                                {downloadingId === row.id ? "..." : "Report"}
-                                            </Button>
+                                            <div className="flex items-center justify-center gap-2">
+                                                <Button
+                                                    variant="outline"
+                                                    size="sm"
+                                                    className="gap-1.5"
+                                                    disabled={downloadingId === row.id}
+                                                    onClick={() => handleDownload(row)}
+                                                >
+                                                    {downloadingId === row.id ? (
+                                                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                                    ) : (
+                                                        <Download className="h-3.5 w-3.5" />
+                                                    )}
+                                                    {downloadingId === row.id ? "..." : "Report"}
+                                                </Button>
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    className="h-8 w-8 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+                                                    onClick={() => {
+                                                        const hiddenIds = JSON.parse(localStorage.getItem('hiddenAnalysisIds') || '[]');
+                                                        if (!hiddenIds.includes(row.id)) {
+                                                            hiddenIds.push(row.id);
+                                                            localStorage.setItem('hiddenAnalysisIds', JSON.stringify(hiddenIds));
+                                                        }
+                                                        setRows((prev) => prev.filter((r) => r.id !== row.id));
+                                                    }}
+                                                    title="Remove from list (local only)"
+                                                >
+                                                    <Trash2 className="h-4 w-4" />
+                                                </Button>
+                                            </div>
                                         </td>
                                     </tr>
                                 ))}

@@ -116,7 +116,11 @@ export function ResultsPage() {
     );
   }
 
-  const overallScore = resumeAnalysis.overall_score || resumeAnalysis.role_fit_score;
+  const resumeMarks = Math.round((Number(resumeAnalysis.resume_quality || resumeAnalysis.role_fit_score || 0) / 100) * 50);
+  const skillMarks = Number(skillResults?.score) || 0;
+  const personalityMarks = Number(personalityResults?.score) || 0;
+  const overallScore = resumeMarks + skillMarks + personalityMarks;
+
   const readinessColor =
     overallScore >= 80
       ? "text-secondary"
@@ -159,6 +163,7 @@ export function ResultsPage() {
         </div>
       )}
 
+
       {/* Section C: Skills Detected */}
       <div className="mb-8 rounded-xl border border-border bg-card p-6">
         <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold text-foreground">
@@ -189,9 +194,9 @@ export function ResultsPage() {
         </h2>
         <div className="mb-4 flex items-end gap-3">
           <span className="text-4xl font-bold text-foreground">
-            {resumeAnalysis.resume_quality}
+            {resumeMarks}
           </span>
-          <span className="mb-1 text-muted-foreground">/100</span>
+          <span className="mb-1 text-muted-foreground">/50</span>
         </div>
         <div className="h-2 rounded-full bg-muted">
           <div
@@ -255,7 +260,7 @@ export function ResultsPage() {
             resumeAnalysis: resumeAnalysis || undefined,
             skillResults: skillResults || undefined,
             personalityResults: personalityResults || undefined,
-            overallScore: resumeAnalysis?.overall_score || resumeAnalysis?.role_fit_score || null,
+            overallScore: overallScore,
             feedback: resumeAnalysis?.feedback || null,
           }}
           className="flex-1"
@@ -263,7 +268,7 @@ export function ResultsPage() {
         <SendResultEmailButton
           email={user?.email || ''}
           name={user?.name || ''}
-          score={resumeAnalysis?.overall_score || resumeAnalysis?.role_fit_score || 0}
+          score={overallScore}
           strengths={resumeAnalysis?.strengths || []}
           weaknesses={resumeAnalysis?.gaps || []}
           suggestions={resumeAnalysis?.feedback ? [resumeAnalysis.feedback] : []}

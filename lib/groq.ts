@@ -39,6 +39,7 @@ export async function callGroq(prompt: string): Promise<string> {
             temperature: 0.9,
             max_tokens: 4096,
             top_p: 0.95,
+            response_format: { type: "json_object" },
         }),
     })
 
@@ -68,12 +69,13 @@ export async function callGroq(prompt: string): Promise<string> {
 export async function callGroqJSON<T = any>(prompt: string): Promise<T> {
     const raw = await callGroq(prompt)
 
-    // LLMs sometimes wrap JSON in ```json ... ``` code fences
-    let cleaned = raw
-    if (cleaned.startsWith('```')) {
-        cleaned = cleaned.replace(/^```(?:json)?\s*/i, '').replace(/```\s*$/, '')
+    let cleaned = raw;
+    // Extract JSON block if surrounded by markdown or conversational text
+    const jsonMatch = cleaned.match(/\{[\s\S]*\}|\[[\s\S]*\]/);
+    if (jsonMatch) {
+        cleaned = jsonMatch[0];
     }
-    cleaned = cleaned.trim()
+    cleaned = cleaned.trim();
 
     try {
         return JSON.parse(cleaned) as T

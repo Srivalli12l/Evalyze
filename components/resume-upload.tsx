@@ -330,9 +330,9 @@ export function ResumeUpload() {
                 </h3>
                 <div className="mb-2 flex items-end gap-2">
                   <span className="text-4xl font-bold text-foreground">
-                    {analysis.role_fit_score}
+                    {Math.round((analysis.role_fit_score / 100) * 50)}
                   </span>
-                  <span className="mb-1 text-muted-foreground">/100</span>
+                  <span className="mb-1 text-muted-foreground">/50</span>
                 </div>
                 <Progress
                   value={analysis.role_fit_score}
@@ -376,9 +376,9 @@ export function ResumeUpload() {
                 </h3>
                 <div className="mb-2 flex items-end gap-2">
                   <span className="text-2xl font-bold text-foreground">
-                    {analysis.resume_quality}
+                    {Math.round((analysis.resume_quality / 100) * 50)}
                   </span>
-                  <span className="mb-0.5 text-muted-foreground">/100</span>
+                  <span className="mb-0.5 text-muted-foreground">/50</span>
                 </div>
                 <Progress value={analysis.resume_quality} className="h-2" />
               </div>

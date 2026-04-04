@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
+import { ThemeToggle } from "@/components/theme-toggle";
 import {
   Sparkles,
   Eye,
@@ -105,7 +106,11 @@ export function AuthPage({ mode }: { mode: "login" | "signup" }) {
   const isValid = mode === "login" ? isLoginValid : isSignupValid;
 
   return (
-    <div className="flex min-h-screen">
+    <div className="relative flex min-h-screen">
+      {/* Theme toggle - top right */}
+      <div className="absolute right-4 top-4 z-10">
+        <ThemeToggle />
+      </div>
       {/* Left side - Form */}
       <div className="flex flex-1 flex-col justify-center px-6 sm:px-8 py-12 lg:max-w-[480px] lg:px-16">
         <button

@@ -16,6 +16,8 @@ interface SkillQuestion {
     explanation: string
 }
 
+
+
 interface PersonalityScenario {
     id: string
     context: string
@@ -34,6 +36,9 @@ export async function GET(req: NextRequest) {
         const skills = searchParams.get('skills') || ''
         const userId = searchParams.get('userId')
 
+        const count = parseInt(searchParams.get('count') || '10', 10)
+        const offset = parseInt(searchParams.get('offset') || '0', 10)
+
         if (!type || !['skill', 'personality'].includes(type)) {
             return NextResponse.json(
                 { success: false, error: 'type must be "skill" or "personality"' },
@@ -49,9 +54,9 @@ export async function GET(req: NextRequest) {
         }
 
         if (type === 'skill') {
-            return await generateSkillQuestions(role, skills, userId)
+            return await generateSkillQuestions(role, skills, userId, count, offset)
         } else {
-            return await generatePersonalityScenarios(role, userId)
+            return await generatePersonalityScenarios(role, userId, count, offset)
         }
     } catch (error: any) {
         console.error('[assessment/questions] Unhandled error:', error?.message)
@@ -64,9 +69,9 @@ export async function GET(req: NextRequest) {
 
 // ─── Skill Question Generation ───────────────────────────────────────
 
-async function generateSkillQuestions(role: string, skills: string, userId: string) {
+async function generateSkillQuestions(role: string, skills: string, userId: string, count: number, offset: number) {
     const timestamp = Date.now()
-    const prompt = `Generate exactly 8 multiple-choice questions to assess a candidate for the role: "${role}".
+    const prompt = `Generate exactly ${count} multiple-choice questions to assess a candidate for the role: "${role}".
 ${skills ? `Focus on these skills from their resume: ${skills}` : 'Cover core technical skills for this role.'}
 
 REQUEST ID: ${timestamp} — generate FRESH, UNIQUE questions.
@@ -74,7 +79,7 @@ REQUEST ID: ${timestamp} — generate FRESH, UNIQUE questions.
 Requirements:
 - Questions must be SPECIFIC and TECHNICAL
 - Each question must have exactly 4 options with exactly one correct answer
-- Vary difficulty: 2 easy, 4 medium, 2 hard
+- Ensure balanced difficulty.
 
 Respond with ONLY this JSON:
 {
@@ -90,7 +95,7 @@ Respond with ONLY this JSON:
   ]
 }
 
-Generate exactly 8 questions with IDs q1 through q8.`
+Generate exactly ${count} questions with IDs q${offset + 1} through q${offset + count}.`
 
     try {
         const result = await callGroqJSON<{ questions: SkillQuestion[] }>(prompt)
@@ -100,8 +105,17 @@ Generate exactly 8 questions with IDs q1 through q8.`
         }
 
         const correctAnswers = result.questions.map(q => q.correct)
+        
+        let finalCorrectAnswers = correctAnswers
+        if (offset > 0) {
+            const prev = questionCache.get(`${userId}:skill`)
+            if (prev?.correctAnswers) {
+                finalCorrectAnswers = [...prev.correctAnswers, ...correctAnswers]
+            }
+        }
+
         questionCache.set(`${userId}:skill`, {
-            correctAnswers,
+            correctAnswers: finalCorrectAnswers,
             optionScores: null,
             timestamp: Date.now(),
         })
@@ -125,11 +139,13 @@ Generate exactly 8 questions with IDs q1 through q8.`
     }
 }
 
+
+
 // ─── Personality Scenario Generation ─────────────────────────────────
 
-async function generatePersonalityScenarios(role: string, userId: string) {
+async function generatePersonalityScenarios(role: string, userId: string, count: number, offset: number) {
     const timestamp = Date.now()
-    const prompt = `Generate exactly 6 workplace scenarios to assess personality traits for the role: "${role}".
+    const prompt = `Generate exactly ${count} workplace scenarios to assess personality traits for the role: "${role}".
 
 REQUEST ID: ${timestamp} — generate FRESH, UNIQUE scenarios.
 
@@ -151,7 +167,7 @@ Respond with ONLY this JSON:
   ]
 }
 
-Generate exactly 6 scenarios (s1-s6). optionScores must have 6 entries with 4 scores each.
+Generate exactly ${count} scenarios (s${offset + 1}-s${offset + count}). optionScores must have ${count} entries with 4 scores each.
 Higher scores = better workplace behavior.`
 
     try {
@@ -165,9 +181,18 @@ Higher scores = better workplace behavior.`
         }
 
         const optionScores = Array.isArray(result.optionScores) ? result.optionScores : []
+        
+        let finalOptionScores = optionScores
+        if (offset > 0) {
+            const prev = questionCache.get(`${userId}:personality`)
+            if (prev?.optionScores) {
+                finalOptionScores = [...prev.optionScores, ...optionScores]
+            }
+        }
+
         questionCache.set(`${userId}:personality`, {
             correctAnswers: null,
-            optionScores,
+            optionScores: finalOptionScores,
             timestamp: Date.now(),
         })
 

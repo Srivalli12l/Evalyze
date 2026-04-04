@@ -11,6 +11,7 @@ import {
     LogOut,
     CheckCircle2
 } from 'lucide-react'
+import { ThemeToggle } from '@/components/theme-toggle'
 import {
     Chart as ChartJS,
     CategoryScale,
@@ -172,16 +173,19 @@ export default function AdminDashboard() {
                             <p className="text-xs text-muted-foreground font-medium">Placement Readiness System</p>
                         </div>
                     </div>
-                    <button
-                        onClick={async () => {
-                            await supabase.auth.signOut()
-                            window.location.href = '/'
-                        }}
-                        className="inline-flex items-center gap-1.5 rounded-lg bg-muted px-3 py-2 text-sm font-medium text-foreground hover:bg-muted/80 transition-colors"
-                    >
-                        <LogOut className="h-4 w-4" />
-                        Logout
-                    </button>
+                    <div className="flex items-center gap-3">
+                        <ThemeToggle />
+                        <button
+                            onClick={async () => {
+                                await supabase.auth.signOut()
+                                window.location.href = '/'
+                            }}
+                            className="inline-flex items-center gap-1.5 rounded-lg bg-muted px-3 py-2 text-sm font-medium text-foreground hover:bg-muted/80 transition-colors"
+                        >
+                            <LogOut className="h-4 w-4" />
+                            Logout
+                        </button>
+                    </div>
                 </div>
             </header>
 

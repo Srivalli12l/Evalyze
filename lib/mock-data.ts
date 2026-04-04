@@ -139,6 +139,36 @@ export const mockSkillQuestions = {
       explanation:
         "useMemo memoizes a computed value, recalculating it only when its dependencies change. This optimization helps avoid expensive calculations on every render.",
     },
+    {
+      id: "q9",
+      skill: "JavaScript",
+      question:
+        "What is the difference between == and === in JavaScript?",
+      options: [
+        "No difference",
+        "== compares value, === compares value and type",
+        "=== is only for numbers",
+        "== is faster than ===",
+      ],
+      correct: 1,
+      explanation:
+        "The == operator performs type coercion before comparison, whereas === (strict equality) compares both the value and the type.",
+    },
+    {
+      id: "q10",
+      skill: "React",
+      question:
+        "Which hook would you use to store a mutable value that does not cause a re-render when updated?",
+      options: [
+        "useState",
+        "useReducer",
+        "useRef",
+        "useMemo",
+      ],
+      correct: 2,
+      explanation:
+        "useRef returns a mutable ref object whose .current property is initialized with the passed argument. Crucially, updating useRef does NOT trigger a component re-render.",
+    },
   ],
 };
 
@@ -222,6 +252,58 @@ export const mockPersonalityScenarios = {
         "Just send them a link to the React documentation",
       ],
       evaluates: "Empathy & Mentorship",
+    },
+    {
+      id: "s7",
+      context: "Frontend Developer workplace scenario",
+      scenario:
+        "You're in the middle of a sprint and a major change in project direction is announced. The work you've done for the past week is no longer needed. How do you respond?",
+      options: [
+        "Complain about the wasted effort to everyone who will listen",
+        "Take a moment to process, then focus on understanding the new requirements and how your previous work might be partially reused",
+        "Refuse to start the new work until the old work's value is acknowledged",
+        "Quietly complete the new work but with significantly less effort",
+      ],
+      evaluates: "Adaptability",
+    },
+    {
+      id: "s8",
+      context: "Frontend Developer workplace scenario",
+      scenario:
+        "You notice a colleague frequently taking credit for your ideas in team meetings. It's starting to affect your motivation. How do you address this?",
+      options: [
+        "Call them out publicly and aggressively in the next meeting",
+        "Start keeping your ideas to yourself",
+        "Schedule a private, professional conversation with them to express your concerns and establish better collaboration boundaries",
+        "Complain to their manager immediately",
+      ],
+      evaluates: "Communication & Conflict Resolution",
+    },
+    {
+      id: "s9",
+      context: "Frontend Developer workplace scenario",
+      scenario:
+        "A junior developer asks for your feedback on a PR. You find many issues. How do you provide the critique?",
+      options: [
+        "List all the mistakes bluntly so they learn fast",
+        "Focus on the most critical issues first, provide constructive feedback with examples, and offer a quick call to explain complex points",
+        "Fix the issues yourself and merge the PR",
+        "Tell them to rewrite the whole thing without specific guidance",
+      ],
+      evaluates: "Mentorship",
+    },
+    {
+      id: "s10",
+      context: "Frontend Developer workplace scenario",
+      scenario:
+        "The team is falling behind on a critical release. Everyone is stressed and working long hours. What's your approach?",
+      options: [
+        "Do only your assigned tasks and leave on time",
+        "Offer to help team members with their blockers, maintain a positive attitude, and focus on the most impactful tasks to meet the deadline",
+        "Blame the project manager for the timeline",
+        "Work in isolation to avoid being distracted by others' stress",
+      ],
+      evaluates: "Teamwork & Resilience",
     },
   ],
 };

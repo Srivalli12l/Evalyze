@@ -62,7 +62,7 @@ type AppContextType = {
   session: Session | null;
   authLoading: boolean;
   authError: string | null;
-  signup: (email: string, password: string, name: string) => Promise<{ success: boolean; error?: string }>;
+  signup: (email: string, password: string, name: string) => Promise<{ success: boolean; error?: string; message?: string }>;
   login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
   logout: () => Promise<void>;
   clearAuthError: () => void;
@@ -279,18 +279,41 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         return;
       }
 
-      // Regular user → always show fresh dashboard (no old data loaded)
-      setCurrentStep("dashboard");
+      // Regular user → only redirect to dashboard if coming from public pages
+      setCurrentStep((prev) => 
+        ["landing", "login", "signup"].includes(prev) ? "dashboard" : prev
+      );
     }
 
     // Check for existing session
     const init = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      setSession(session);
-      if (session?.user) {
-        await handleSessionUser(session);
+      // Temporarily suppress the notoriously noisy "Invalid Refresh Token" error
+      // that Supabase throws when clearing out an expired local session.
+      const originalError = console.error;
+      console.error = (...args: any[]) => {
+        if (
+          typeof args[0] === "string" &&
+          args[0].includes("Invalid Refresh Token")
+        )
+          return;
+        if (
+          args[0]?.message &&
+          args[0].message.includes("Invalid Refresh Token")
+        )
+          return;
+        originalError(...args);
+      };
+
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        setSession(session);
+        if (session?.user) {
+          await handleSessionUser(session);
+        }
+      } finally {
+        console.error = originalError;
+        setAuthLoading(false);
       }
-      setAuthLoading(false);
     };
     init();
 
@@ -316,7 +339,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     email: string,
     password: string,
     name: string
-  ): Promise<{ success: boolean; error?: string }> => {
+  ): Promise<{ success: boolean; error?: string; message?: string }> => {
     setAuthLoading(true);
     setAuthError(null);
 
@@ -630,7 +653,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         });
 
         // Save completed analysis to history
-        const overallScore = resumeAnalysis?.overall_score || resumeAnalysis?.role_fit_score || 0;
+        const resumeMarks = Math.round((Number(resumeAnalysis?.resume_quality || resumeAnalysis?.role_fit_score || 0) / 100) * 50);
+        const skillMarks = Number(skillResults?.score) || 0;
+        const personalityMarks = Number(newPersonalityResults?.score) || 0;
+        const overallScore = resumeMarks + skillMarks + personalityMarks;
+
         const readinessLevel =
           overallScore >= 80 ? "Excellent" :
             overallScore >= 60 ? "Good" :

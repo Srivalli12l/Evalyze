@@ -36,38 +36,61 @@ export function PersonalityTest() {
   const [phase, setPhase] = useState<Phase>("loading");
   const [currentS, setCurrentS] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [scenarios, setScenarios] = useState(mockPersonalityScenarios.scenarios);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [scenarios, setScenarios] = useState(mockPersonalityScenarios.scenarios.slice(0, 10));
   const [answers, setAnswers] = useState<(number | null)[]>(
-    new Array(mockPersonalityScenarios.scenarios.length).fill(null)
+    new Array(10).fill(null)
   );
 
-  // Fetch AI-generated scenarios on mount
-  useEffect(() => {
-    const fetchScenarios = async () => {
-      try {
-        const userId = session?.user?.id;
-        if (!userId) { setPhase("quiz"); return; }
+  const fetchScenarios = async (currentOffset: number = 0, countToFetch: number = 10): Promise<boolean> => {
+    try {
+      const userId = session?.user?.id;
+      if (!userId) { 
+        if (currentOffset === 0) setPhase("quiz"); 
+        return false; 
+      }
 
-        const role = selectedRole || 'Software Developer';
-        const res = await fetch(
-          `/api/assessment/questions?type=personality&role=${encodeURIComponent(role)}&userId=${userId}`
-        );
-        const data = await res.json();
+      if (currentOffset > 0) {
+        setIsLoadingMore(true);
+      } else {
+        setPhase("loading");
+      }
 
-        if (data.success && data.data?.scenarios?.length > 0) {
+      const role = selectedRole || 'Software Developer';
+      const res = await fetch(
+        `/api/assessment/questions?type=personality&role=${encodeURIComponent(role)}&userId=${userId}&count=${countToFetch}&offset=${currentOffset}`
+      );
+      const data = await res.json();
+
+      if (data.success && data.data?.scenarios?.length > 0) {
+        if (currentOffset === 0) {
           setScenarios(data.data.scenarios);
           setAnswers(new Array(data.data.scenarios.length).fill(null));
-          console.log('[PersonalityTest] Using AI-generated scenarios');
         } else {
-          console.log('[PersonalityTest] Falling back to mock scenarios');
+          setScenarios(prev => [...prev, ...data.data.scenarios]);
+          setAnswers(prev => [...prev, ...new Array(data.data.scenarios.length).fill(null)]);
         }
-      } catch (err) {
-        console.warn('[PersonalityTest] Fetch failed, using mock scenarios:', err);
-      } finally {
-        setPhase("quiz");
+        console.log('[PersonalityTest] Using AI-generated scenarios');
+        return true;
+      } else {
+        console.log('[PersonalityTest] Falling back to mock scenarios');
+        return false;
       }
-    };
-    fetchScenarios();
+    } catch (err) {
+      console.warn('[PersonalityTest] Fetch failed, using mock scenarios:', err);
+      return false;
+    } finally {
+      if (currentOffset === 0) {
+        setPhase("quiz");
+      } else {
+        setIsLoadingMore(false);
+      }
+    }
+  };
+
+  // Fetch initial AI-generated scenarios on mount
+  useEffect(() => {
+    fetchScenarios(0, 10);
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const totalS = scenarios.length;
@@ -113,10 +136,10 @@ export function PersonalityTest() {
             <Heart className="h-3.5 w-3.5" />
             Personality Assessment Complete
           </div>
-          <div className="mb-2 text-6xl font-bold text-foreground">85</div>
-          <p className="text-muted-foreground">/100 Score</p>
+          <div className="mb-2 text-6xl font-bold text-foreground">{personalityResults?.score ?? '--'}</div>
+          <p className="text-muted-foreground">/25 Marks</p>
           <p className="mt-2 text-lg font-medium text-foreground">
-            Excellent Soft Skills
+            {(personalityResults?.score ?? 0) >= 20 ? "Excellent Soft Skills" : (personalityResults?.score ?? 0) >= 15 ? "Good Soft Skills" : "Keep Developing Your Soft Skills"}
           </p>
         </div>
 
@@ -194,6 +217,19 @@ export function PersonalityTest() {
   // Quiz Phase
   const scenario = scenarios[currentS];
   const allAnswered = answers.every((a) => a !== null);
+
+  if (!scenario) {
+    return (
+      <div className="flex min-h-[60vh] items-center justify-center p-6">
+        <div className="flex flex-col items-center gap-4">
+          <p className="text-muted-foreground">Unable to load scenario. You can try refreshing or submit your current progress.</p>
+          <Button onClick={handleSubmit} disabled={isSubmitting} className="gap-2">
+            Submit Assessment
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="mx-auto max-w-3xl p-6 md:p-10">
@@ -310,14 +346,32 @@ export function PersonalityTest() {
         </div>
 
         {currentS === totalS - 1 ? (
-          <Button
-            onClick={handleSubmit}
-            disabled={!allAnswered || isSubmitting}
-            className="gap-2"
-          >
-            {isSubmitting ? "Submitting..." : "Submit"}
-            {!isSubmitting && <ArrowRight className="h-4 w-4" />}
-          </Button>
+          <div className="flex gap-2">
+            {totalS < 25 && (
+              <Button
+                variant="outline"
+                className="gap-2 border-2 border-primary/20 bg-primary/5 hover:bg-primary/15 text-primary hover:text-primary transition-all duration-300 font-bold"
+                disabled={isLoadingMore}
+                onClick={async () => {
+                  const countToFetch = Math.min(10, 25 - totalS);
+                  const success = await fetchScenarios(totalS, countToFetch);
+                  if (success) {
+                    setCurrentS((c) => c + 1);
+                  }
+                }}
+              >
+                {isLoadingMore ? <Loader2 className="h-4 w-4 animate-spin" /> : "+ Load More Scenarios"}
+              </Button>
+            )}
+            <Button
+              onClick={handleSubmit}
+              disabled={!allAnswered || isSubmitting || isLoadingMore}
+              className="gap-2"
+            >
+              {isSubmitting ? "Submitting..." : "Submit"}
+              {!isSubmitting && <ArrowRight className="h-4 w-4" />}
+            </Button>
+          </div>
         ) : (
           <Button
             onClick={() => setCurrentS((c) => c + 1)}

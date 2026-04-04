@@ -3,6 +3,7 @@
 import { type ReactNode, useState } from "react";
 import { useApp, type AppStep } from "@/lib/app-context";
 import { Button } from "@/components/ui/button";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { cn } from "@/lib/utils";
 import {
   Sparkles,
@@ -224,18 +225,26 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
             </div>
             <span className="font-bold text-foreground">Evalyze</span>
           </div>
-          <button
-            type="button"
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="text-foreground"
-          >
-            {mobileMenuOpen ? (
-              <X className="h-5 w-5" />
-            ) : (
-              <Menu className="h-5 w-5" />
-            )}
-          </button>
+          <div className="flex items-center gap-2">
+            <ThemeToggle />
+            <button
+              type="button"
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="text-foreground"
+            >
+              {mobileMenuOpen ? (
+                <X className="h-5 w-5" />
+              ) : (
+                <Menu className="h-5 w-5" />
+              )}
+            </button>
+          </div>
         </header>
+
+        {/* Desktop top bar with theme toggle */}
+        <div className="hidden lg:flex items-center justify-end border-b border-border bg-card px-6 py-2">
+          <ThemeToggle />
+        </div>
 
         {/* Mobile sidebar overlay */}
         {mobileMenuOpen && (

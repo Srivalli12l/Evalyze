@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useApp } from "@/lib/app-context";
-import { mockSkillQuestions } from "@/lib/mock-data";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import {
@@ -25,76 +24,48 @@ import {
 
 type Phase = "loading" | "quiz" | "confirm" | "results";
 
-export function SkillAssessment() {
-  const { setCurrentStep, submitSkillTest, skillResults, session, selectedRole, resumeAnalysis } = useApp();
+export function AptitudeTest() {
+  const { setCurrentStep, submitAptitudeTest, aptitudeResults, session, selectedRole } = useApp();
   const [phase, setPhase] = useState<Phase>("loading");
   const [currentQ, setCurrentQ] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isLoadingMore, setIsLoadingMore] = useState(false);
-  const [questions, setQuestions] = useState(mockSkillQuestions.questions.slice(0, 10));
-  const [answers, setAnswers] = useState<(number | null)[]>(
-    new Array(10).fill(null)
-  );
-  const [timeLeft, setTimeLeft] = useState(15 * 60); // 15 min
+  const [questions, setQuestions] = useState<any[]>([]);
+  const [answers, setAnswers] = useState<(number | null)[]>(new Array(10).fill(null));
+  const [timeLeft, setTimeLeft] = useState(15 * 60);
 
-  const fetchQuestions = async (currentOffset: number = 0, countToFetch: number = 10): Promise<boolean> => {
-    try {
-      const userId = session?.user?.id;
-      if (!userId) { 
-        if (currentOffset === 0) setPhase("quiz"); 
-        return false; 
-      }
+  // Fetch AI-generated questions on mount
+  useEffect(() => {
+    const fetchQuestions = async () => {
+      try {
+        const userId = session?.user?.id;
+        if (!userId) { setPhase("quiz"); return; }
 
-      if (currentOffset > 0) {
-        setIsLoadingMore(true);
-      } else {
-        setPhase("loading");
-      }
+        const role = selectedRole || 'Software Developer';
+        const res = await fetch(
+          `/api/assessment/questions?type=aptitude&role=${encodeURIComponent(role)}&userId=${userId}`
+        );
+        const data = await res.json();
 
-      const role = selectedRole || 'Software Developer';
-      const skills = resumeAnalysis?.skills_detected?.join(',') || '';
-      const res = await fetch(
-        `/api/assessment/questions?type=skill&role=${encodeURIComponent(role)}&skills=${encodeURIComponent(skills)}&userId=${userId}&count=${countToFetch}&offset=${currentOffset}`
-      );
-      const data = await res.json();
-
-      if (data.success && data.data?.questions?.length > 0) {
-        if (currentOffset === 0) {
+        if (data.success && data.data?.questions?.length > 0) {
           setQuestions(data.data.questions);
           setAnswers(new Array(data.data.questions.length).fill(null));
         } else {
-          setQuestions(prev => [...prev, ...data.data.questions]);
-          setAnswers(prev => [...prev, ...new Array(data.data.questions.length).fill(null)]);
+          console.warn('[AptitudeTest] Failed to load questions properly');
         }
-        console.log('[SkillAssessment] Using AI-generated questions');
-        return true;
-      } else {
-        console.log('[SkillAssessment] Falling back to mock questions');
-        return false;
-      }
-    } catch (err) {
-      console.warn('[SkillAssessment] Fetch failed, using mock questions:', err);
-      return false;
-    } finally {
-      if (currentOffset === 0) {
+      } catch (err) {
+        console.warn('[AptitudeTest] Fetch failed:', err);
+      } finally {
         setPhase("quiz");
-      } else {
-        setIsLoadingMore(false);
       }
-    }
-  };
-
-  // Fetch initial AI-generated questions on mount
-  useEffect(() => {
-    fetchQuestions(0, 10);
+    };
+    fetchQuestions();
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const totalQ = questions.length;
   const answeredCount = answers.filter((a) => a !== null).length;
 
-  // Timer
   useEffect(() => {
-    if (phase !== "quiz") return;
+    if (phase !== "quiz" || totalQ === 0) return;
     const timer = setInterval(() => {
       setTimeLeft((t) => {
         if (t <= 0) {
@@ -106,7 +77,7 @@ export function SkillAssessment() {
       });
     }, 1000);
     return () => clearInterval(timer);
-  }, [phase]);
+  }, [phase, totalQ]);
 
   const formatTime = (s: number) => {
     const min = Math.floor(s / 60);
@@ -127,34 +98,34 @@ export function SkillAssessment() {
 
   const handleSubmit = async () => {
     setIsSubmitting(true);
-    // Replace valid nulls with -1 or 0 for API safety if needed, check API expectation
-    // API expects number[]
-    const finalAnswers = answers.map(a => a ?? -1); // -1 for unanswered
-
-    await submitSkillTest(finalAnswers);
+    const finalAnswers = answers.map(a => a ?? -1);
+    await submitAptitudeTest(finalAnswers);
     setIsSubmitting(false);
-    // skillResults will be set by context
-    setCurrentStep("skill-assessment"); // Trigger re-render or check? 
-    // Actually, usually we show results view. 
-    // The component likely switches phase based on skillResults presence? 
-    // Let's check how it renders results.
-    // It seems it has a 'results' phase.
     setPhase("results");
   };
 
-  // Loading AI questions
   if (phase === "loading") {
     return (
       <div className="flex min-h-[60vh] items-center justify-center p-6">
         <div className="flex flex-col items-center gap-4">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
-          <p className="text-muted-foreground">Generating skill assessment questions...</p>
+          <p className="text-muted-foreground">Generating specific aptitude questions for your role...</p>
         </div>
       </div>
     );
   }
 
-  // Confirm modal
+  if (totalQ === 0) {
+      return (
+        <div className="flex min-h-[60vh] items-center justify-center p-6">
+          <div className="flex flex-col items-center gap-4">
+            <AlertCircle className="h-8 w-8 text-destructive" />
+            <p className="text-muted-foreground">Failed to load aptitude questions. Please try again later.</p>
+          </div>
+        </div>
+      );
+  }
+
   if (phase === "confirm") {
     return (
       <div className="flex min-h-[60vh] items-center justify-center p-6">
@@ -174,8 +145,8 @@ export function SkillAssessment() {
             >
               Review
             </Button>
-            <Button className="flex-1" onClick={handleSubmit}>
-              Submit
+            <Button className="flex-1" onClick={handleSubmit} disabled={isSubmitting}>
+              {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : "Submit"}
             </Button>
           </div>
         </div>
@@ -184,45 +155,26 @@ export function SkillAssessment() {
   }
 
   if (phase === "results") {
-    const correct = answers.filter(
-      (a, i) => a === questions[i].correct
-    ).length;
+    const correct = answers.filter((a, i) => a === questions[i].correct).length;
     const accuracy = Math.round((correct / totalQ) * 100);
-    const score = Math.round((correct / totalQ) * 25);
-
-    const skillBreakdown: Record<
-      string,
-      { correct: number; total: number }
-    > = {};
-    questions.forEach((q, i) => {
-      if (!skillBreakdown[q.skill])
-        skillBreakdown[q.skill] = { correct: 0, total: 0 };
-      skillBreakdown[q.skill].total++;
-      if (answers[i] === q.correct) skillBreakdown[q.skill].correct++;
-    });
+    const score = accuracy;
 
     return (
       <div className="mx-auto max-w-3xl p-6 md:p-10">
-        {/* Score Hero */}
         <div className="mb-8 rounded-2xl border border-border bg-card p-8 text-center">
           <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-primary/10 px-4 py-1.5 text-sm font-medium text-primary">
             <Sparkles className="h-3.5 w-3.5" />
-            Skill Assessment Complete
+            Aptitude Test Complete
           </div>
           <div className="mb-2 text-6xl font-bold text-foreground">
             {score}
           </div>
-          <p className="text-muted-foreground">/25 Marks</p>
+          <p className="text-muted-foreground">/100 Score</p>
           <p className="mt-2 text-lg font-medium text-foreground">
-            {score >= 20
-              ? "Excellent work!"
-              : score >= 15
-                ? "Good job!"
-                : "Keep practicing!"}
+            {score >= 80 ? "Excellent work!" : score >= 60 ? "Good job!" : "Keep practicing!"}
           </p>
         </div>
 
-        {/* Stats */}
         <div className="mb-8 grid grid-cols-3 gap-4">
           <div className="rounded-xl border border-border bg-card p-4 text-center">
             <p className="text-2xl font-bold text-foreground">{totalQ}</p>
@@ -238,44 +190,8 @@ export function SkillAssessment() {
           </div>
         </div>
 
-        {/* Skill Breakdown */}
         <div className="mb-8 rounded-xl border border-border bg-card p-6">
-          <h3 className="mb-4 font-semibold text-foreground">
-            Skill Performance
-          </h3>
-          <div className="flex flex-col gap-4">
-            {Object.entries(skillBreakdown).map(([skill, data]) => {
-              const pct = Math.round((data.correct / data.total) * 100);
-              return (
-                <div key={skill}>
-                  <div className="mb-1 flex items-center justify-between text-sm">
-                    <span className="font-medium text-foreground">
-                      {skill}
-                    </span>
-                    <span className="text-muted-foreground">
-                      {data.correct}/{data.total} ({pct}%)
-                    </span>
-                  </div>
-                  <div className="h-2 rounded-full bg-muted">
-                    <div
-                      className={cn(
-                        "h-2 rounded-full transition-all duration-500",
-                        pct >= 75 ? "bg-secondary" : pct >= 50 ? "bg-accent" : "bg-destructive"
-                      )}
-                      style={{ width: `${pct}%` }}
-                    />
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* Question Review */}
-        <div className="mb-8 rounded-xl border border-border bg-card p-6">
-          <h3 className="mb-4 font-semibold text-foreground">
-            Question Review
-          </h3>
+          <h3 className="mb-4 font-semibold text-foreground">Question Review</h3>
           <Accordion type="multiple" className="w-full">
             {questions.map((q, i) => {
               const isCorrect = answers[i] === q.correct;
@@ -288,8 +204,9 @@ export function SkillAssessment() {
                       ) : (
                         <XCircle className="h-4 w-4 shrink-0 text-destructive" />
                       )}
+                      <span className="text-sm border rounded px-2 py-0.5 whitespace-nowrap text-xs">{q.category}</span>
                       <span className="text-sm">
-                        Q{i + 1}: {q.question.slice(0, 60)}...
+                        Q{i + 1}: {q.question.slice(0, 50)}...
                       </span>
                     </div>
                   </AccordionTrigger>
@@ -297,16 +214,13 @@ export function SkillAssessment() {
                     <div className="flex flex-col gap-2 pl-7 text-sm">
                       <p className="text-muted-foreground">{q.question}</p>
                       <div className="mt-2 flex flex-col gap-1">
-                        {q.options.map((opt, oi) => (
+                        {q.options.map((opt: string, oi: number) => (
                           <div
                             key={oi}
                             className={cn(
                               "rounded-md px-3 py-1.5",
-                              oi === q.correct &&
-                              "bg-secondary/10 font-medium text-secondary",
-                              oi === answers[i] &&
-                              oi !== q.correct &&
-                              "bg-destructive/10 text-destructive line-through"
+                              oi === q.correct && "bg-secondary/10 font-medium text-secondary",
+                              oi === answers[i] && oi !== q.correct && "bg-destructive/10 text-destructive line-through"
                             )}
                           >
                             {opt}
@@ -327,55 +241,28 @@ export function SkillAssessment() {
         <Button
           size="lg"
           className="w-full gap-2"
-          onClick={() => setCurrentStep("personality-test")}
+          onClick={() => setCurrentStep("skill-assessment")}
         >
-          Continue to Personality Assessment
+          Continue to Skill Assessment
           <ArrowRight className="h-4 w-4" />
         </Button>
       </div>
     );
   }
 
-  // Quiz Phase
   const q = questions[currentQ];
-
-  if (!q) {
-    return (
-      <div className="flex min-h-[60vh] items-center justify-center p-6">
-        <div className="flex flex-col items-center gap-4">
-          <p className="text-muted-foreground">Unable to load question. You can try refreshing or submit your current progress.</p>
-          <Button onClick={() => setPhase("confirm")} className="gap-2">
-            Submit Assessment
-          </Button>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="mx-auto max-w-3xl p-6 md:p-10">
-      {/* Header */}
       <div className="mb-6">
         <div className="mb-1 flex items-center gap-2 text-sm">
           <Sparkles className="h-4 w-4 text-primary" />
           <span className="font-medium text-primary">
-            Skill Assessment for {(() => {
-              if (!selectedRole) return "your target role";
-              const lowRole = selectedRole.toLowerCase();
-              if (lowRole.includes('mobile')) return 'mobile development';
-              if (lowRole.includes('fullstack')) return 'fullstack development';
-              if (lowRole.includes('front end')) return 'front end development';
-              if (lowRole.includes('backend')) return 'backend development';
-              return selectedRole;
-            })()}
+            Aptitude Test for {selectedRole || "your role"}
           </span>
         </div>
-        <p className="text-xs text-muted-foreground">
-          Questions based on YOUR resume
-        </p>
       </div>
 
-      {/* Progress & Timer */}
       <div className="mb-6 flex items-center justify-between">
         <div className="flex-1">
           <div className="mb-1 flex items-center justify-between text-sm">
@@ -385,30 +272,24 @@ export function SkillAssessment() {
             <div
               className={cn(
                 "flex items-center gap-1 font-mono text-sm",
-                timeLeft < 120
-                  ? "text-destructive"
-                  : "text-muted-foreground"
+                timeLeft < 120 ? "text-destructive" : "text-muted-foreground"
               )}
             >
               <Clock className="h-3.5 w-3.5" />
               {formatTime(timeLeft)}
             </div>
           </div>
-          <Progress
-            value={((currentQ + 1) / totalQ) * 100}
-            className="h-1.5"
-          />
+          <Progress value={((currentQ + 1) / totalQ) * 100} className="h-1.5" />
         </div>
       </div>
 
-      {/* Question Card */}
       <div className="mb-6 rounded-xl border border-border bg-card p-6">
         <div className="mb-4 flex items-center gap-2">
           <span className="text-sm font-medium text-muted-foreground">
             Question {currentQ + 1}
           </span>
           <span className="rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary">
-            {q.skill}
+            {q.category}
           </span>
         </div>
         <p className="mb-6 text-lg font-medium leading-relaxed text-foreground">
@@ -416,7 +297,7 @@ export function SkillAssessment() {
         </p>
 
         <div className="flex flex-col gap-3">
-          {q.options.map((option, idx) => (
+          {q.options.map((option: string, idx: number) => (
             <button
               key={idx}
               type="button"
@@ -446,7 +327,6 @@ export function SkillAssessment() {
         </div>
       </div>
 
-      {/* Navigation */}
       <div className="flex items-center justify-between">
         <Button
           variant="outline"
@@ -458,7 +338,6 @@ export function SkillAssessment() {
           Previous
         </Button>
 
-        {/* Question indicators */}
         <div className="hidden items-center gap-1 md:flex">
           {questions.map((_, i) => (
             <button
@@ -470,41 +349,20 @@ export function SkillAssessment() {
                 i === currentQ
                   ? "bg-primary"
                   : answers[i] !== null
-                    ? "bg-secondary"
-                    : "bg-border"
+                  ? "bg-secondary"
+                  : "bg-border"
               )}
             />
           ))}
         </div>
 
         {currentQ === totalQ - 1 ? (
-          <div className="flex gap-2">
-            {totalQ < 25 && (
-              <Button
-                variant="outline"
-                className="gap-2 border-2 border-primary/20 bg-primary/5 hover:bg-primary/15 text-primary hover:text-primary transition-all duration-300 font-bold"
-                disabled={isLoadingMore}
-                onClick={async () => {
-                  const countToFetch = Math.min(10, 25 - totalQ);
-                  const success = await fetchQuestions(totalQ, countToFetch);
-                  if (success) {
-                    setCurrentQ((c) => c + 1);
-                  }
-                }}
-              >
-                {isLoadingMore ? <Loader2 className="h-4 w-4 animate-spin" /> : "+ Load More Questions"}
-              </Button>
-            )}
-            <Button onClick={() => setPhase("confirm")} disabled={isLoadingMore} className="gap-2">
-              Submit
-              <ArrowRight className="h-4 w-4" />
-            </Button>
-          </div>
+          <Button onClick={() => setPhase("confirm")} className="gap-2">
+            Submit
+            <ArrowRight className="h-4 w-4" />
+          </Button>
         ) : (
-          <Button
-            onClick={() => setCurrentQ((c) => c + 1)}
-            className="gap-2"
-          >
+          <Button onClick={() => setCurrentQ((c) => c + 1)} className="gap-2">
             Next
             <ArrowRight className="h-4 w-4" />
           </Button>

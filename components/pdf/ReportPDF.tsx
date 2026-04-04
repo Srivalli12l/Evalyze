@@ -169,11 +169,11 @@ export function ReportPDF({ data }: { data: ReportData }) {
                     <>
                         <View style={styles.row}>
                             <Text style={styles.label}>Role Fit Score</Text>
-                            <Text style={styles.value}>{data.resumeAnalysis.role_fit_score}%</Text>
+                            <Text style={styles.value}>{Math.round((data.resumeAnalysis.role_fit_score / 100) * 50)}/50</Text>
                         </View>
                         <View style={styles.row}>
                             <Text style={styles.label}>Resume Quality</Text>
-                            <Text style={styles.value}>{data.resumeAnalysis.resume_quality}%</Text>
+                            <Text style={styles.value}>{Math.round((data.resumeAnalysis.resume_quality / 100) * 50)}/50</Text>
                         </View>
                         <View style={styles.row}>
                             <Text style={styles.label}>Skills Detected</Text>
@@ -210,7 +210,7 @@ export function ReportPDF({ data }: { data: ReportData }) {
                     <>
                         <View style={styles.row}>
                             <Text style={styles.label}>Skill Score</Text>
-                            <Text style={styles.value}>{data.skillResults.score}%</Text>
+                            <Text style={styles.value}>{data.skillResults.score}/25</Text>
                         </View>
                         <View style={styles.row}>
                             <Text style={styles.label}>Accuracy</Text>
@@ -242,7 +242,7 @@ export function ReportPDF({ data }: { data: ReportData }) {
                     <View style={styles.personalityWrapper}>
                         <View style={styles.row}>
                             <Text style={styles.label}>Personality Score</Text>
-                            <Text style={styles.value}>{data.personalityResults.score}%</Text>
+                            <Text style={styles.value}>{data.personalityResults.score}/25</Text>
                         </View>
                     </View>
                 )}

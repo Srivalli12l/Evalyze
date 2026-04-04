@@ -28,7 +28,7 @@ function gradeSkill(answers: number[], correctAnswers: readonly number[], skillL
     })
 
     const accuracy = Math.round((correctCount / totalQuestions) * 100)
-    const score = accuracy
+    const score = Math.round((correctCount / totalQuestions) * 25)
 
     return {
         score,
@@ -53,7 +53,8 @@ function gradePersonality(answers: number[], optionScores: readonly (readonly nu
         total += scores[idx]
     })
 
-    const score = Math.round(total / count)
+    const avgScore = total / count
+    const score = Math.round((avgScore / 100) * 25)
 
     return {
         score,
@@ -93,7 +94,6 @@ export async function POST(req: NextRequest) {
             analysisId?: string
         }
 
-        // ── Validate ─────────────────────────────────────────────────
         if (!type || !['skill', 'personality'].includes(type)) {
             return NextResponse.json(
                 { error: 'type must be "skill" or "personality"' },
@@ -140,7 +140,7 @@ export async function POST(req: NextRequest) {
         // Find existing assessment for THIS specific analysis session
         let existingQuery = supabaseAdmin
             .from('assessment_results')
-            .select('id, skill_score, personality_score')
+            .select('id, skill_score, personality_score, analysis_id')
             .eq('user_id', userId)
 
         // Link to specific analysis session if provided
@@ -153,16 +153,30 @@ export async function POST(req: NextRequest) {
             .limit(1)
             .maybeSingle()
 
+        // Fetch the corresponding resume to calculate overall score accurately
+        const targetAnalysisId = analysisId || existing?.analysis_id
+        let resume_score = 0
+        if (targetAnalysisId) {
+            const { data: resumeData } = await supabaseAdmin
+                .from('resume_analysis')
+                .select('analysis_score')
+                .eq('id', targetAnalysisId)
+                .single()
+            if (resumeData && resumeData.analysis_score) {
+                resume_score = resumeData.analysis_score
+            }
+        }
+
         // Merge scores: keep the existing score for the OTHER assessment type
         const mergedSkill = skill_score ?? existing?.skill_score ?? null
         const mergedPersonality =
             personality_score ?? existing?.personality_score ?? null
 
-        // Compute overall only when both exist
-        const overall_score =
-            mergedSkill != null && mergedPersonality != null
-                ? Math.round((mergedSkill + mergedPersonality) / 2)
-                : mergedSkill ?? mergedPersonality ?? 0
+        // Compute overall: Resume (max 50) + Skill (max 25) + Personality (max 25)
+        const resumeMarks = Math.round((resume_score / 100) * 50)
+        let overall_score = resumeMarks
+        if (mergedSkill != null) overall_score += mergedSkill
+        if (mergedPersonality != null) overall_score += mergedPersonality
 
         const feedback = generateFeedback(overall_score)
 

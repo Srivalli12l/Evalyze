@@ -16,6 +16,8 @@ export const SKILL_QUESTIONS = [
     { id: 'q6', skill: 'CSS', correct: 1 },
     { id: 'q7', skill: 'JavaScript', correct: 2 },
     { id: 'q8', skill: 'React', correct: 0 },
+    { id: 'q9', skill: 'JavaScript', correct: 1 },
+    { id: 'q10', skill: 'React', correct: 2 },
 ] as const;
 
 // Convenience: flat array of correct indices
@@ -40,4 +42,12 @@ export const PERSONALITY_OPTION_SCORES: readonly (readonly number[])[] = [
     [20, 100, 40, 10],
     // s6 – Empathy & Mentorship
     [20, 100, 30, 15],
+    // s7 – Adaptability
+    [10, 100, 20, 30],
+    // s8 – Communication & Conflict Resolution
+    [20, 10, 100, 30],
+    // s9 – Mentorship
+    [40, 100, 20, 10],
+    // s10 – Teamwork & Resilience
+    [30, 100, 10, 20],
 ];
