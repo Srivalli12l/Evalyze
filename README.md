@@ -71,37 +71,56 @@ The platform provides students with structured AI-driven feedback, progress trac
 
 ## 🧑‍💻 Installation & Setup
 
+### Clone the repository
+
 ```bash
-**Clone the repository:**
 git clone https://github.com/Srivalli12l/Evalyze.git
+```
 
-**Navigate to the project directory:**
+### Navigate to the project directory
+
+```bash
 cd evalyze
+```
 
-**Install dependencies:**
+### Install dependencies
+
+```bash
 npm install
+```
 
-**Create a .env.local file in the root directory and add the following environment variables:**
+### Create a `.env.local` file
+
+```env
 NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
 GROQ_API_KEY=your_groq_api_key
+```
 
-**Run the development server:**
+### Run the development server
+
+```bash
 npm run dev
+```
 
-**Open your browser and visit:**
+### Open in browser
+
+```bash
 http://localhost:3000
+```
 
 ---
 
-##🔮 Future Improvements
-AI-based interview simulation
-Personalized learning roadmap
-Advanced analytics & performance insights
-Company-specific placement preparation
-Resume optimization assistant
+## 🔮 Future Improvements
+
+- AI-based interview simulation
+- Personalized learning roadmap
+- Advanced analytics & performance insights
+- Company-specific placement preparation
+- Resume optimization assistant
 
 ---
 
-##💡 Project Goal
+## 💡 Project Goal
+
 Evalyze was built to help students better understand their placement readiness level through AI-powered analysis and structured assessments, enabling them to improve their technical and soft skills effectively.
