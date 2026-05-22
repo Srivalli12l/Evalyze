@@ -71,9 +71,7 @@ The platform provides students with structured AI-driven feedback, progress trac
 
 ## 🧑‍💻 Installation & Setup
 
-Clone the repository:
-
-```bash
+**Clone the repository:**
 git clone https://github.com/Srivalli12l/Evalyze.git
 
 **Navigate to the project directory:**
@@ -94,6 +92,7 @@ npm run dev
 http://localhost:3000
 
 ---
+
 ##🔮 Future Improvements
 AI-based interview simulation
 Personalized learning roadmap
