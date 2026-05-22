@@ -2,8 +2,6 @@
 
 Evalyze is a full-stack AI-powered web application designed to help students analyze and improve their placement readiness through resume analysis, skill assessments, and personality evaluation.
 
-Developed collaboratively with Srivalli L.
-
 The platform provides students with structured AI-driven feedback, progress tracking, and actionable insights to prepare more effectively for placements and interviews.
 
 ---
