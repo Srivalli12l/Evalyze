@@ -71,6 +71,7 @@ The platform provides students with structured AI-driven feedback, progress trac
 
 ## 🧑‍💻 Installation & Setup
 
+```bash
 **Clone the repository:**
 git clone https://github.com/Srivalli12l/Evalyze.git
 
