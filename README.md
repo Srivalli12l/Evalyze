@@ -96,7 +96,7 @@ npm run dev
 http://localhost:3000
 
 ---
-🔮 Future Improvements
+##🔮 Future Improvements
 AI-based interview simulation
 Personalized learning roadmap
 Advanced analytics & performance insights
@@ -104,5 +104,6 @@ Company-specific placement preparation
 Resume optimization assistant
 
 ---
-💡 Project Goal
+
+##💡 Project Goal
 Evalyze was built to help students better understand their placement readiness level through AI-powered analysis and structured assessments, enabling them to improve their technical and soft skills effectively.
